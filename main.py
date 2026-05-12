@@ -31,13 +31,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve static files (HTML dashboard)
+# Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Serve index.html at root
-@app.get("/dashboard")
-def serve_dashboard():
+# Root serves login page
+@app.get("/")
+async def root():
     return FileResponse("static/index.html")
+
+# Dashboard page
+@app.get("/dashboard")
+async def dashboard():
+    return FileResponse("static/dashboard.html")
 
 # API routes
 app.include_router(auth.router)
@@ -45,10 +50,6 @@ app.include_router(users.router)
 app.include_router(transactions.router)
 app.include_router(ventes.router)
 app.include_router(logs.router)
-
-@app.get("/")
-def root():
-    return {"status": "active", "version": "1.0.0", "dashboard": "/dashboard"}
 
 @app.get("/health")
 def health():

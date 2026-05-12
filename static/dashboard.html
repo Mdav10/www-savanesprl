@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SavaneSPRL - Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial; background: #f0f2f5; }
+        .header { background: white; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .container { padding: 20px; max-width: 1400px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .stats { display: flex; gap: 20px; flex-wrap: wrap; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; flex: 1; min-width: 150px; }
+        .stat-card h3 { margin-bottom: 10px; }
+        .stat-card p { font-size: 28px; font-weight: bold; }
+        input, select, button { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #007bff; color: white; cursor: pointer; border: none; }
+        button:hover { opacity: 0.8; }
+        .logout-btn { background: #dc3545; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; }
+        .hidden { display: none; }
+        .success { color: green; }
+        .error { color: red; }
+        .nav-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        .nav-btn { background: #6c757d; }
+        .nav-btn.active { background: #007bff; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🏢 SavaneSPRL</h2>
+        <div>
+            <span id="userInfo" style="margin-right: 15px;"></span>
+            <button class="logout-btn" onclick="logout()">Déconnexion</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="nav-buttons" id="navButtons"></div>
+
+        <!-- DG Section -->
+        <div id="dgSection" class="hidden">
+            <div class="card">
+                <h3>📊 Tableau de Bord</h3>
+                <div class="stats" id="dgStats"></div>
+            </div>
+            
+            <div class="card">
+                <h3>➕ Créer un utilisateur</h3>
+                <input type="text" id="newNom" placeholder="Nom complet">
+                <input type="email" id="newEmail" placeholder="Email">
+                <input type="text" id="newUsername" placeholder="Nom utilisateur">
+                <input type="password" id="newPassword" placeholder="Mot de passe">
+                <select id="newRole">
+                    <option value="DAF">DAF</option>
+                    <option value="DIRECTEUR_COMMERCIAL">Directeur Commercial</option>
+                    <option value="COMPTABLE">Comptable</option>
+                    <option value="AGENT_MARKETING">Agent Marketing</option>
+                </select>
+                <button onclick="createUser()">Créer</button>
+                <div id="createMsg"></div>
+            </div>
+
+            <div class="card">
+                <h3>👥 Utilisateurs</h3>
+                <table id="usersTable">
+                    <thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Action</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- DAF Section -->
+        <div id="dafSection" class="hidden">
+            <div class="card">
+                <h3>📊 Finances</h3>
+                <div class="stats" id="dafStats"></div>
+            </div>
+            <div class="card">
+                <h3>⏳ Validations en attente</h3>
+                <div id="pendingList"></div>
+            </div>
+        </div>
+
+        <!-- Commercial Section -->
+        <div id="commercialSection" class="hidden">
+            <div class="card">
+                <h3>📈 Performance</h3>
+                <div id="commercialData"></div>
+            </div>
+        </div>
+
+        <!-- Comptable Section -->
+        <div id="comptableSection" class="hidden">
+            <div class="card">
+                <h3>💰 Nouvelle transaction</h3>
+                <select id="txType"><option value="entree">Entrée</option><option value="sortie">Sortie</option></select>
+                <input type="number" id="txMontant" placeholder="Montant">
+                <input type="text" id="txLibelle" placeholder="Libellé">
+                <button onclick="createTransaction()">Enregistrer</button>
+            </div>
+            <div class="card">
+                <h3>📋 Historique</h3>
+                <div id="txList"></div>
+            </div>
+        </div>
+
+        <!-- Agent Section -->
+        <div id="agentSection" class="hidden">
+            <div class="card">
+                <h3>📝 Enregistrer vente</h3>
+                <input type="text" id="venteProduit" placeholder="Produit">
+                <input type="number" id="venteQuantite" placeholder="Quantité">
+                <input type="number" id="ventePrix" placeholder="Prix unitaire">
+                <button onclick="createVente()">Enregistrer</button>
+                <div id="venteMsg"></div>
+            </div>
+            <div class="card">
+                <h3>📋 Mes ventes</h3>
+                <div id="mesVentes"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+        let userRole = localStorage.getItem('userRole');
+        
+        if (!token) window.location.href = '/';
+        
+        const API = window.location.origin;
+        
+        async function loadDashboard() {
+            document.getElementById('userInfo').innerHTML = `👑 ${userRole} | ${localStorage.getItem('userName') || ''}`;
+            
+            if (userRole === 'DG') {
+                document.getElementById('dgSection').classList.remove('hidden');
+                loadDGData();
+                loadUsers();
+            } else if (userRole === 'DAF') {
+                document.getElementById('dafSection').classList.remove('hidden');
+                loadDAFData();
+            } else if (userRole === 'DIRECTEUR_COMMERCIAL') {
+                document.getElementById('commercialSection').classList.remove('hidden');
+                loadCommercialData();
+            } else if (userRole === 'COMPTABLE') {
+                document.getElementById('comptableSection').classList.remove('hidden');
+                loadTransactions();
+            } else if (userRole === 'AGENT_MARKETING') {
+                document.getElementById('agentSection').classList.remove('hidden');
+                loadMyVentes();
+            }
+        }
+        
+        async function loadDGData() {
+            const res = await fetch(API + '/api/transactions/dashboard/dg-daf', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const d = await res.json();
+            document.getElementById('dgStats').innerHTML = `
+                <div class="stat-card"><h3>💰 Entrées</h3><p>${d.total_entrees || 0}€</p></div>
+                <div class="stat-card"><h3>📤 Sorties</h3><p>${d.total_sorties || 0}€</p></div>
+                <div class="stat-card"><h3>💵 Solde</h3><p>${d.montant_disponible || 0}€</p></div>
+            `;
+        }
+        
+        async function loadUsers() {
+            const res = await fetch(API + '/api/users/', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const users = await res.json();
+            let html = '';
+            for (const u of users) {
+                if (u.role !== 'DG') {
+                    html += `<tr>
+                        <td>${u.nom}</td><td>${u.email}</td><td>${u.role}</td>
+                        <td>${u.is_active ? '✅ Actif' : '❌ Inactif'}</td>
+                        <td>${u.is_active ? `<button onclick="disableUser(${u.id})">❌ Désactiver</button>` : `<button onclick="enableUser(${u.id})">✅ Activer</button>`}</td>
+                    </tr>`;
+                }
+            }
+            document.querySelector('#usersTable tbody').innerHTML = html;
+        }
+        
+        async function createUser() {
+            const nom = document.getElementById('newNom').value;
+            const email = document.getElementById('newEmail').value;
+            const username = document.getElementById('newUsername').value;
+            const password = document.getElementById('newPassword').value;
+            const role = document.getElementById('newRole').value;
+            
+            const res = await fetch(API + `/api/users/create?nom=${encodeURIComponent(nom)}&email=${email}&username=${username}&mot_de_passe=${password}&role=${role}`, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) {
+                document.getElementById('createMsg').innerHTML = '<span class="success">✅ Utilisateur créé</span>';
+                setTimeout(() => document.getElementById('createMsg').innerHTML = '', 3000);
+                loadUsers();
+            } else {
+                document.getElementById('createMsg').innerHTML = '<span class="error">❌ Erreur</span>';
+            }
+        }
+        
+        async function disableUser(id) {
+            await fetch(API + `/api/users/disable/${id}`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
+            loadUsers();
+        }
+        
+        async function enableUser(id) {
+            await fetch(API + `/api/users/enable/${id}`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
+            loadUsers();
+        }
+        
+        async function loadDAFData() {
+            const res = await fetch(API + '/api/transactions/dashboard/dg-daf', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const d = await res.json();
+            document.getElementById('dafStats').innerHTML = `
+                <div class="stat-card"><h3>💰 Entrées</h3><p>${d.total_entrees || 0}€</p></div>
+                <div class="stat-card"><h3>📤 Sorties</h3><p>${d.total_sorties || 0}€</p></div>
+                <div class="stat-card"><h3>💵 Solde</h3><p>${d.montant_disponible || 0}€</p></div>
+            `;
+            
+            const pRes = await fetch(API + '/api/transactions/pending', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const pending = await pRes.json();
+            let html = '';
+            for (const p of pending) {
+                html += `<div style="border:1px solid #ddd; padding:10px; margin:10px 0">
+                    <strong>${p.libelle}</strong> - ${p.montant}€<br>
+                    <button onclick="validateTx(${p.id}, 'APPROUVE')">✅ Approuver</button>
+                    <button onclick="validateTx(${p.id}, 'REJETE')">❌ Rejeter</button>
+                </div>`;
+            }
+            document.getElementById('pendingList').innerHTML = html || '<p>Aucune</p>';
+        }
+        
+        async function validateTx(id, action) {
+            await fetch(API + `/api/transactions/validate/${id}?action=${action}`, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            loadDAFData();
+        }
+        
+        async function loadCommercialData() {
+            const res = await fetch(API + '/api/ventes/commercial/dashboard', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const d = await res.json();
+            let html = `<div class="stats"><div class="stat-card"><h3>📦 Ventes totales</h3><p>${d.quantite_vendue_totale || 0}</p></div></div>`;
+            html += '<h3>Performance</h3><table><tr><th>Agent</th><th>Quantité</th><th>Montant</th></tr>';
+            for (const a of d.performance_agents || []) {
+                html += `<tr><td>${a.agent}</td><td>${a.quantite}</td><td>${a.montant}€</td></tr>`;
+            }
+            html += '</table>';
+            document.getElementById('commercialData').innerHTML = html;
+        }
+        
+        async function createTransaction() {
+            const type = document.getElementById('txType').value;
+            const montant = document.getElementById('txMontant').value;
+            const libelle = document.getElementById('txLibelle').value;
+            await fetch(API + `/api/transactions/create?type=${type}&montant=${montant}&libelle=${encodeURIComponent(libelle)}`, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            loadTransactions();
+        }
+        
+        async function loadTransactions() {
+            const res = await fetch(API + '/api/transactions/journal', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const txs = await res.json();
+            let html = '<table><tr><th>Date</th><th>Type</th><th>Montant</th><th>Libellé</th><th>Statut</th></tr>';
+            for (const tx of txs.slice(0, 20)) {
+                html += `<tr><td>${new Date(tx.date).toLocaleDateString()}</td><td>${tx.type}</td><td>${tx.montant}€</td><td>${tx.libelle}</td><td>${tx.statut}</td></tr>`;
+            }
+            html += '</table>';
+            document.getElementById('txList').innerHTML = html;
+        }
+        
+        async function createVente() {
+            const produit = document.getElementById('venteProduit').value;
+            const quantite = document.getElementById('venteQuantite').value;
+            const prix = document.getElementById('ventePrix').value;
+            await fetch(API + `/api/ventes/create?produit=${produit}&quantite=${quantite}&prix_unitaire=${prix}`, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            loadMyVentes();
+        }
+        
+        async function loadMyVentes() {
+            const res = await fetch(API + '/api/ventes/agent/my-ventes', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const ventes = await res.json();
+            let html = '<table><tr><th>Produit</th><th>Quantité</th><th>Prix</th><th>Date</th></tr>';
+            for (const v of ventes) {
+                html += `<tr><td>${v.produit}</td><td>${v.quantite}</td><td>${v.prix_unitaire}€</td><td>${new Date(v.date).toLocaleDateString()}</td></tr>`;
+            }
+            html += '</table>';
+            document.getElementById('mesVentes').innerHTML = html;
+        }
+        
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+        
+        loadDashboard();
+    </script>
+</body>
+</html>
