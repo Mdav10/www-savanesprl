@@ -1,77 +1,484 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SavaneSPRL - Dashboard</title>
+    <title>SavaneSPRL</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: Arial; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
-        input, button { padding: 10px; margin: 5px; width: 100%; }
+        * { box-sizing: border-box; }
+        body { font-family: Arial; margin: 0; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 1200px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1, h2 { color: #333; }
+        input, select, button { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }
+        input, select { width: 200px; }
         button { background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .logout-btn { background: #dc3545; }
+        .logout-btn:hover { background: #c82333; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; }
         .hidden { display: none; }
-        .card { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+        .stats { display: flex; gap: 20px; flex-wrap: wrap; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; flex: 1; min-width: 150px; }
+        .stat-card h3 { margin: 0 0 10px 0; }
+        .stat-card p { font-size: 24px; margin: 0; font-weight: bold; }
+        .nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .nav-btn { background: #6c757d; }
+        .nav-btn.active { background: #007bff; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>🔒 SavaneSPRL</h1>
-    
-    <div id="loginSection">
-        <h2>Login</h2>
-        <input type="text" id="username" placeholder="Username" value="OsiasHab">
-        <input type="password" id="password" placeholder="Password" value="08800Osi">
-        <button onclick="login()">Login</button>
+    <div id="loginPage">
+        <div class="card" style="max-width: 400px; margin: 50px auto;">
+            <h1>🔒 SavaneSPRL</h1>
+            <p>Connectez-vous à votre compte</p>
+            <input type="text" id="username" placeholder="Nom d'utilisateur">
+            <input type="password" id="password" placeholder="Mot de passe">
+            <button onclick="doLogin()">Se connecter</button>
+            <div id="loginError" class="error"></div>
+        </div>
     </div>
-    
-    <div id="dashboardSection" class="hidden">
-        <h2>📊 Dashboard DG</h2>
-        <div id="dashboardData"></div>
-        <button onclick="logout()">Logout</button>
+
+    <div id="appPage" class="hidden">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>🏢 SavaneSPRL</h1>
+                <div>
+                    <span id="userRole" style="margin-right: 15px;"></span>
+                    <button class="logout-btn" onclick="doLogout()">Déconnexion</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav" id="navButtons"></div>
+
+        <!-- Dashboard DG -->
+        <div id="dgSection" class="hidden">
+            <div class="card">
+                <h2>📊 Tableau de Bord DG</h2>
+                <div class="stats" id="dgStats"></div>
+            </div>
+            
+            <div class="card">
+                <h2>👥 Gestion des Utilisateurs</h2>
+                <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <h3>➕ Créer un utilisateur</h3>
+                    <input type="text" id="newNom" placeholder="Nom complet">
+                    <input type="email" id="newEmail" placeholder="Email">
+                    <input type="text" id="newUsername" placeholder="Nom d'utilisateur">
+                    <input type="password" id="newPassword" placeholder="Mot de passe">
+                    <select id="newRole">
+                        <option value="DAF">DAF</option>
+                        <option value="DIRECTEUR_COMMERCIAL">Directeur Commercial</option>
+                        <option value="COMPTABLE">Comptable</option>
+                        <option value="AGENT_MARKETING">Agent Marketing</option>
+                    </select>
+                    <button onclick="createUser()">Créer</button>
+                    <div id="createMsg"></div>
+                </div>
+                
+                <h3>📋 Liste des utilisateurs</h3>
+                <table id="usersTable">
+                    <thead>
+                        <tr><th>ID</th><th>Nom</th><th>Email</th><th>Username</th><th>Rôle</th><th>Statut</th><th>Action</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <div class="card">
+                <h2>📜 Journal des activités</h2>
+                <table id="logsTable">
+                    <thead><tr><th>Utilisateur</th><th>Action</th><th>Détails</th><th>Date</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Dashboard DAF -->
+        <div id="dafSection" class="hidden">
+            <div class="card">
+                <h2>📊 Tableau de Bord DAF</h2>
+                <div class="stats" id="dafStats"></div>
+            </div>
+            <div class="card">
+                <h2>⏳ Validations en attente</h2>
+                <div id="pendingValidations"></div>
+            </div>
+        </div>
+
+        <!-- Dashboard Commercial -->
+        <div id="commercialSection" class="hidden">
+            <div class="card">
+                <h2>📈 Performance Commerciale</h2>
+                <div id="commercialStats"></div>
+            </div>
+        </div>
+
+        <!-- Dashboard Comptable -->
+        <div id="comptableSection" class="hidden">
+            <div class="card">
+                <h2>💰 Transactions</h2>
+                <div style="margin-bottom: 20px;">
+                    <h3>Nouvelle transaction</h3>
+                    <select id="txType">
+                        <option value="entree">Entrée (Revenu)</option>
+                        <option value="sortie">Sortie (Dépense)</option>
+                    </select>
+                    <input type="number" id="txMontant" placeholder="Montant">
+                    <input type="text" id="txLibelle" placeholder="Libellé">
+                    <button onclick="createTransaction()">Enregistrer</button>
+                </div>
+                <h3>Historique</h3>
+                <div id="transactionsList"></div>
+            </div>
+        </div>
+
+        <!-- Dashboard Agent Marketing -->
+        <div id="agentSection" class="hidden">
+            <div class="card">
+                <h2>📝 Enregistrer une vente</h2>
+                <input type="text" id="venteProduit" placeholder="Produit">
+                <input type="number" id="venteQuantite" placeholder="Quantité">
+                <input type="number" id="ventePrix" placeholder="Prix unitaire">
+                <button onclick="createVente()">Enregistrer vente</button>
+                <div id="venteMsg"></div>
+            </div>
+            <div class="card">
+                <h2>📋 Mes ventes</h2>
+                <div id="mesVentes"></div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    let token = null;
-    const API_URL = window.location.origin;
+    let token = '';
+    let userRole = '';
     
-    async function login() {
+    const API = window.location.origin;
+
+    async function doLogin() {
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
         
-        const response = await fetch(`${API_URL}/api/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, mot_de_passe: password })
-        });
+        if (!username || !password) {
+            document.getElementById('loginError').innerText = 'Veuillez entrer vos identifiants';
+            return;
+        }
         
-        const data = await response.json();
-        if (data.access_token) {
-            token = data.access_token;
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('dashboardSection').classList.remove('hidden');
-            loadDashboard();
-        } else {
-            alert('Login failed: ' + JSON.stringify(data));
+        try {
+            const res = await fetch(API + '/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username, mot_de_passe: password })
+            });
+            const data = await res.json();
+            
+            if (data.access_token) {
+                token = data.access_token;
+                userRole = data.role;
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('appPage').classList.remove('hidden');
+                document.getElementById('userRole').innerText = '👑 ' + data.role + ' - ' + data.nom;
+                loadDashboard();
+            } else {
+                document.getElementById('loginError').innerText = 'Identifiants incorrects';
+            }
+        } catch (err) {
+            document.getElementById('loginError').innerText = 'Erreur de connexion';
         }
     }
     
     async function loadDashboard() {
-        const response = await fetch(`${API_URL}/api/transactions/dashboard/dg-daf`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+        // Show navigation based on role
+        const nav = document.getElementById('navButtons');
+        nav.innerHTML = '';
+        
+        if (userRole === 'DG') {
+            document.getElementById('dgSection').classList.remove('hidden');
+            document.getElementById('dafSection').classList.add('hidden');
+            document.getElementById('commercialSection').classList.add('hidden');
+            document.getElementById('comptableSection').classList.add('hidden');
+            document.getElementById('agentSection').classList.add('hidden');
+            loadDGData();
+            loadUsers();
+            loadLogs();
+        } else if (userRole === 'DAF') {
+            document.getElementById('dgSection').classList.add('hidden');
+            document.getElementById('dafSection').classList.remove('hidden');
+            document.getElementById('commercialSection').classList.add('hidden');
+            document.getElementById('comptableSection').classList.add('hidden');
+            document.getElementById('agentSection').classList.add('hidden');
+            loadDAFData();
+        } else if (userRole === 'DIRECTEUR_COMMERCIAL') {
+            document.getElementById('dgSection').classList.add('hidden');
+            document.getElementById('dafSection').classList.add('hidden');
+            document.getElementById('commercialSection').classList.remove('hidden');
+            document.getElementById('comptableSection').classList.add('hidden');
+            document.getElementById('agentSection').classList.add('hidden');
+            loadCommercialData();
+        } else if (userRole === 'COMPTABLE') {
+            document.getElementById('dgSection').classList.add('hidden');
+            document.getElementById('dafSection').classList.add('hidden');
+            document.getElementById('commercialSection').classList.add('hidden');
+            document.getElementById('comptableSection').classList.remove('hidden');
+            document.getElementById('agentSection').classList.add('hidden');
+            loadTransactions();
+        } else if (userRole === 'AGENT_MARKETING') {
+            document.getElementById('dgSection').classList.add('hidden');
+            document.getElementById('dafSection').classList.add('hidden');
+            document.getElementById('commercialSection').classList.add('hidden');
+            document.getElementById('comptableSection').classList.add('hidden');
+            document.getElementById('agentSection').classList.remove('hidden');
+            loadMyVentes();
+        }
+    }
+    
+    async function loadDGData() {
+        const res = await fetch(API + '/api/transactions/dashboard/dg-daf', {
+            headers: { 'Authorization': 'Bearer ' + token }
         });
-        const data = await response.json();
-        document.getElementById('dashboardData').innerHTML = `
-            <div class="card">💰 Total Entrées: ${data.total_entrees || 0} €</div>
-            <div class="card">📤 Total Sorties: ${data.total_sorties || 0} €</div>
-            <div class="card">💵 Montant Disponible: ${data.montant_disponible || 0} €</div>
-            <div class="card">⏳ Validations en Attente: ${data.validations_en_attente || 0}</div>
+        const data = await res.json();
+        document.getElementById('dgStats').innerHTML = `
+            <div class="stat-card"><h3>💰 Total Entrées</h3><p>${data.total_entrees || 0} €</p></div>
+            <div class="stat-card"><h3>📤 Total Sorties</h3><p>${data.total_sorties || 0} €</p></div>
+            <div class="stat-card"><h3>💵 Solde Disponible</h3><p>${data.montant_disponible || 0} €</p></div>
+            <div class="stat-card"><h3>⏳ En Attente</h3><p>${data.validations_en_attente || 0}</p></div>
         `;
     }
     
-    function logout() {
-        token = null;
-        document.getElementById('loginSection').classList.remove('hidden');
-        document.getElementById('dashboardSection').classList.add('hidden');
+    async function loadUsers() {
+        const res = await fetch(API + '/api/users/', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const users = await res.json();
+        const tbody = document.querySelector('#usersTable tbody');
+        tbody.innerHTML = '';
+        for (const u of users) {
+            const row = tbody.insertRow();
+            row.insertCell(0).innerText = u.id;
+            row.insertCell(1).innerText = u.nom;
+            row.insertCell(2).innerText = u.email;
+            row.insertCell(3).innerText = u.username;
+            row.insertCell(4).innerText = u.role;
+            row.insertCell(5).innerHTML = u.is_active ? '✅ Actif' : '❌ Inactif';
+            const actionCell = row.insertCell(6);
+            if (u.role !== 'DG') {
+                if (u.is_active) {
+                    actionCell.innerHTML = `<button onclick="disableUser(${u.id})">Désactiver</button>`;
+                } else {
+                    actionCell.innerHTML = `<button onclick="enableUser(${u.id})">Activer</button>`;
+                }
+            }
+        }
+    }
+    
+    async function createUser() {
+        const nom = document.getElementById('newNom').value;
+        const email = document.getElementById('newEmail').value;
+        const username = document.getElementById('newUsername').value;
+        const password = document.getElementById('newPassword').value;
+        const role = document.getElementById('newRole').value;
+        
+        if (!nom || !email || !username || !password) {
+            document.getElementById('createMsg').innerHTML = '<span class="error">Tous les champs sont requis</span>';
+            return;
+        }
+        
+        const res = await fetch(API + `/api/users/create?nom=${encodeURIComponent(nom)}&email=${encodeURIComponent(email)}&username=${encodeURIComponent(username)}&mot_de_passe=${encodeURIComponent(password)}&role=${role}`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        
+        if (res.ok) {
+            document.getElementById('createMsg').innerHTML = '<span class="success">✅ Utilisateur créé avec succès</span>';
+            document.getElementById('newNom').value = '';
+            document.getElementById('newEmail').value = '';
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            loadUsers();
+        } else {
+            const err = await res.json();
+            document.getElementById('createMsg').innerHTML = '<span class="error">❌ ' + err.detail + '</span>';
+        }
+    }
+    
+    async function disableUser(userId) {
+        await fetch(API + `/api/users/disable/${userId}`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        loadUsers();
+    }
+    
+    async function enableUser(userId) {
+        await fetch(API + `/api/users/enable/${userId}`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        loadUsers();
+    }
+    
+    async function loadLogs() {
+        const res = await fetch(API + '/api/logs/', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const logs = await res.json();
+        const tbody = document.querySelector('#logsTable tbody');
+        tbody.innerHTML = '';
+        for (const log of logs.slice(0, 20)) {
+            const row = tbody.insertRow();
+            row.insertCell(0).innerText = log.user_id;
+            row.insertCell(1).innerText = log.action;
+            row.insertCell(2).innerText = log.details;
+            row.insertCell(3).innerText = new Date(log.date).toLocaleString();
+        }
+    }
+    
+    async function loadDAFData() {
+        const res = await fetch(API + '/api/transactions/dashboard/dg-daf', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        document.getElementById('dafStats').innerHTML = `
+            <div class="stat-card"><h3>💰 Total Entrées</h3><p>${data.total_entrees || 0} €</p></div>
+            <div class="stat-card"><h3>📤 Total Sorties</h3><p>${data.total_sorties || 0} €</p></div>
+            <div class="stat-card"><h3>💵 Solde Disponible</h3><p>${data.montant_disponible || 0} €</p></div>
+        `;
+        
+        const pendingRes = await fetch(API + '/api/transactions/pending', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const pending = await pendingRes.json();
+        let html = '';
+        for (const p of pending) {
+            html += `<div style="border:1px solid #ddd; padding:10px; margin:10px 0;">
+                        <strong>${p.libelle}</strong> - ${p.montant} €<br>
+                        Date: ${new Date(p.date).toLocaleString()}<br>
+                        <button onclick="validateTx(${p.id}, 'APPROUVE')">✅ Approuver</button>
+                        <button onclick="validateTx(${p.id}, 'REJETE')">❌ Rejeter</button>
+                    </div>`;
+        }
+        document.getElementById('pendingValidations').innerHTML = html || '<p>Aucune validation en attente</p>';
+    }
+    
+    async function validateTx(txId, action) {
+        await fetch(API + `/api/transactions/validate/${txId}?action=${action}`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        loadDAFData();
+    }
+    
+    async function loadCommercialData() {
+        const res = await fetch(API + '/api/ventes/commercial/dashboard', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        let html = `<div class="stats">
+                        <div class="stat-card"><h3>📦 Quantité Vendue</h3><p>${data.quantite_vendue_totale || 0}</p></div>
+                    </div>
+                    <h3>Performance des Agents</h3><table><tr><th>Agent</th><th>Quantité</th><th>Montant</th></tr>`;
+        for (const a of data.performance_agents || []) {
+            html += `<tr><td>${a.agent}</td><td>${a.quantite}</td><td>${a.montant} €</td></tr>`;
+        }
+        html += `</table><h3>Stock Disponible</h3><table><tr><th>Produit</th><th>Disponible</th></tr>`;
+        for (const s of data.stock || []) {
+            html += `<tr><td>${s.produit}</td><td>${s.disponible}</td></tr>`;
+        }
+        html += `</table>`;
+        document.getElementById('commercialStats').innerHTML = html;
+    }
+    
+    async function createTransaction() {
+        const type = document.getElementById('txType').value;
+        const montant = document.getElementById('txMontant').value;
+        const libelle = document.getElementById('txLibelle').value;
+        
+        const res = await fetch(API + `/api/transactions/create?type=${type}&montant=${montant}&libelle=${encodeURIComponent(libelle)}`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (res.ok) {
+            alert('Transaction créée');
+            document.getElementById('txMontant').value = '';
+            document.getElementById('txLibelle').value = '';
+            loadTransactions();
+        } else {
+            alert('Erreur');
+        }
+    }
+    
+    async function loadTransactions() {
+        const res = await fetch(API + '/api/transactions/journal', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const txs = await res.json();
+        let html = '<table><tr><th>Date</th><th>Type</th><th>Montant</th><th>Libellé</th><th>Statut</th></tr>';
+        for (const tx of txs.slice(0, 30)) {
+            html += `<tr>
+                        <td>${new Date(tx.date).toLocaleString()}</td>
+                        <td>${tx.type}</td>
+                        <td>${tx.montant} €</td>
+                        <td>${tx.libelle}</td>
+                        <td>${tx.statut}</td>
+                     </tr>`;
+        }
+        html += '</table>';
+        document.getElementById('transactionsList').innerHTML = html;
+    }
+    
+    async function createVente() {
+        const produit = document.getElementById('venteProduit').value;
+        const quantite = document.getElementById('venteQuantite').value;
+        const prix = document.getElementById('ventePrix').value;
+        
+        const res = await fetch(API + `/api/ventes/create?produit=${encodeURIComponent(produit)}&quantite=${quantite}&prix_unitaire=${prix}`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (res.ok) {
+            document.getElementById('venteMsg').innerHTML = '<span class="success">✅ Vente enregistrée</span>';
+            document.getElementById('venteProduit').value = '';
+            document.getElementById('venteQuantite').value = '';
+            document.getElementById('ventePrix').value = '';
+            loadMyVentes();
+        } else {
+            document.getElementById('venteMsg').innerHTML = '<span class="error">❌ Erreur</span>';
+        }
+    }
+    
+    async function loadMyVentes() {
+        const res = await fetch(API + '/api/ventes/agent/my-ventes', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const ventes = await res.json();
+        let html = '<table><tr><th>Produit</th><th>Quantité</th><th>Prix unitaire</th><th>Date</th></tr>';
+        for (const v of ventes) {
+            html += `<tr>
+                        <td>${v.produit}</td>
+                        <td>${v.quantite}</td>
+                        <td>${v.prix_unitaire} €</td>
+                        <td>${new Date(v.date).toLocaleString()}</td>
+                     </tr>`;
+        }
+        html += '</table>';
+        document.getElementById('mesVentes').innerHTML = html;
+    }
+    
+    function doLogout() {
+        token = '';
+        userRole = '';
+        document.getElementById('loginPage').classList.remove('hidden');
+        document.getElementById('appPage').classList.add('hidden');
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+        document.getElementById('loginError').innerText = '';
     }
 </script>
 </body>
