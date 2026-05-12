@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SavaneSPRL - Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
+        input, button { padding: 10px; margin: 5px; width: 100%; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; }
+        .hidden { display: none; }
+        .card { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔒 SavaneSPRL</h1>
+    
+    <div id="loginSection">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Username" value="OsiasHab">
+        <input type="password" id="password" placeholder="Password" value="08800Osi">
+        <button onclick="login()">Login</button>
+    </div>
+    
+    <div id="dashboardSection" class="hidden">
+        <h2>📊 Dashboard DG</h2>
+        <div id="dashboardData"></div>
+        <button onclick="logout()">Logout</button>
+    </div>
+</div>
+
+<script>
+    let token = null;
+    const API_URL = window.location.origin;
+    
+    async function login() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        
+        const response = await fetch(`${API_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, mot_de_passe: password })
+        });
+        
+        const data = await response.json();
+        if (data.access_token) {
+            token = data.access_token;
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            loadDashboard();
+        } else {
+            alert('Login failed: ' + JSON.stringify(data));
+        }
+    }
+    
+    async function loadDashboard() {
+        const response = await fetch(`${API_URL}/api/transactions/dashboard/dg-daf`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        document.getElementById('dashboardData').innerHTML = `
+            <div class="card">💰 Total Entrées: ${data.total_entrees || 0} €</div>
+            <div class="card">📤 Total Sorties: ${data.total_sorties || 0} €</div>
+            <div class="card">💵 Montant Disponible: ${data.montant_disponible || 0} €</div>
+            <div class="card">⏳ Validations en Attente: ${data.validations_en_attente || 0}</div>
+        `;
+    }
+    
+    function logout() {
+        token = null;
+        document.getElementById('loginSection').classList.remove('hidden');
+        document.getElementById('dashboardSection').classList.add('hidden');
+    }
+</script>
+</body>
+</html>

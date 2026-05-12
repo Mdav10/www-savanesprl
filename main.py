@@ -1,6 +1,8 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from app.database import engine, Base, SessionLocal
 from app.routes import auth, users, transactions, ventes, logs
 from app.routes.auth import create_default_dg
@@ -29,7 +31,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
+# Serve static files (HTML dashboard)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Serve index.html at root
+@app.get("/dashboard")
+def serve_dashboard():
+    return FileResponse("static/index.html")
+
+# API routes
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(transactions.router)
@@ -38,7 +48,7 @@ app.include_router(logs.router)
 
 @app.get("/")
 def root():
-    return {"status": "active", "version": "1.0.0"}
+    return {"status": "active", "version": "1.0.0", "dashboard": "/dashboard"}
 
 @app.get("/health")
 def health():
