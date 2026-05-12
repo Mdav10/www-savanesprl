@@ -2,48 +2,73 @@
 <html>
 <head>
     <title>SavaneSPRL - Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta charset="UTF-8">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial; background: #f0f2f5; }
-        .header { background: white; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-        .container { padding: 20px; max-width: 1400px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .stats { display: flex; gap: 20px; flex-wrap: wrap; }
-        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; flex: 1; min-width: 150px; }
-        .stat-card h3 { margin-bottom: 10px; }
-        .stat-card p { font-size: 28px; font-weight: bold; }
-        input, select, button { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }
-        button { background: #007bff; color: white; cursor: pointer; border: none; }
-        button:hover { opacity: 0.8; }
-        .logout-btn { background: #dc3545; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: #f8f9fa; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f5f7fb; padding-bottom: 80px; }
+        .header { background: white; padding: 16px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+        .header h2 { font-size: 20px; color: #1a1a2e; }
+        .user-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .user-badge { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 16px; border-radius: 30px; font-size: 14px; font-weight: 500; }
+        .logout-btn { background: #dc3545; color: white; border: none; padding: 8px 20px; border-radius: 30px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .logout-btn:active { transform: scale(0.96); }
+        .container { padding: 16px; max-width: 600px; margin: 0 auto; }
+        .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .card h3 { font-size: 18px; color: #1a1a2e; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px; border-radius: 16px; text-align: center; }
+        .stat-card h4 { font-size: 13px; opacity: 0.9; margin-bottom: 8px; }
+        .stat-card p { font-size: 24px; font-weight: bold; }
+        input, select { width: 100%; padding: 14px; margin: 6px 0; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; background: #f8f9fa; }
+        input:focus, select:focus { outline: none; border-color: #667eea; background: white; }
+        button { background: #007bff; color: white; border: none; padding: 14px 20px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 8px; }
+        button:active { transform: scale(0.98); }
+        .btn-small { padding: 8px 12px; font-size: 13px; width: auto; margin: 0; }
+        .btn-pdf { background: #dc3545; margin-top: 10px; }
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 500px; }
+        th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; color: #555; }
+        .status-active { color: #28a745; font-weight: 600; }
+        .status-inactive { color: #dc3545; }
         .hidden { display: none; }
-        .success { color: green; }
-        .error { color: red; }
-        .nav-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-        .nav-btn { background: #6c757d; }
-        .nav-btn.active { background: #007bff; }
+        .success { color: #28a745; background: #e6ffed; padding: 10px; border-radius: 10px; margin-top: 10px; font-size: 13px; }
+        .error { color: #dc3545; background: #ffe5e5; padding: 10px; border-radius: 10px; margin-top: 10px; font-size: 13px; }
+        .pending-card { background: #f8f9fa; border-radius: 12px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #ffc107; }
+        .pending-buttons { display: flex; gap: 10px; margin-top: 10px; }
+        .pending-buttons button { flex: 1; margin: 0; }
+        .approve-btn { background: #28a745; }
+        .reject-btn { background: #dc3545; }
+        .nav-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; }
+        .nav-tab { background: white; color: #666; padding: 10px 16px; border-radius: 30px; font-size: 14px; white-space: nowrap; width: auto; margin: 0; }
+        .nav-tab.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
     </style>
 </head>
 <body>
     <div class="header">
         <h2>🏢 SavaneSPRL</h2>
-        <div>
-            <span id="userInfo" style="margin-right: 15px;"></span>
-            <button class="logout-btn" onclick="logout()">Déconnexion</button>
+        <div class="user-info">
+            <span class="user-badge" id="userInfo"></span>
+            <button class="logout-btn" onclick="logout()">🚪 Déconnexion</button>
         </div>
     </div>
 
     <div class="container">
-        <div class="nav-buttons" id="navButtons"></div>
+        <!-- PDF Download Buttons for DG/DAF -->
+        <div id="pdfButtons" class="hidden card">
+            <h3>📄 Télécharger Rapports PDF</h3>
+            <button class="btn-pdf" onclick="downloadPDF('transactions')">📊 Télécharger Transactions</button>
+            <button class="btn-pdf" onclick="downloadPDF('financial')">💰 Télécharger Rapport Financier</button>
+            <button class="btn-pdf" onclick="downloadPDF('sales')">📦 Télécharger Ventes</button>
+        </div>
+
+        <div class="nav-tabs" id="navTabs"></div>
 
         <!-- DG Section -->
         <div id="dgSection" class="hidden">
             <div class="card">
-                <h3>📊 Tableau de Bord</h3>
+                <h3>📊 Tableau de Bord DG</h3>
                 <div class="stats" id="dgStats"></div>
             </div>
             
@@ -54,40 +79,48 @@
                 <input type="text" id="newUsername" placeholder="Nom utilisateur">
                 <input type="password" id="newPassword" placeholder="Mot de passe">
                 <select id="newRole">
-                    <option value="DAF">DAF</option>
-                    <option value="DIRECTEUR_COMMERCIAL">Directeur Commercial</option>
-                    <option value="COMPTABLE">Comptable</option>
-                    <option value="AGENT_MARKETING">Agent Marketing</option>
+                    <option value="DAF">📊 DAF</option>
+                    <option value="DIRECTEUR_COMMERCIAL">🛒 Directeur Commercial</option>
+                    <option value="COMPTABLE">💰 Comptable</option>
+                    <option value="AGENT_MARKETING">📦 Agent Marketing</option>
                 </select>
-                <button onclick="createUser()">Créer</button>
+                <button onclick="createUser()">✅ Créer l'utilisateur</button>
                 <div id="createMsg"></div>
             </div>
 
             <div class="card">
                 <h3>👥 Utilisateurs</h3>
-                <table id="usersTable">
-                    <thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Action</th></tr></thead>
-                    <tbody></tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table id="usersTable">
+                        <thead><tr><th>Nom</th><th>Rôle</th><th>Statut</th><th>Action</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <!-- DAF Section -->
         <div id="dafSection" class="hidden">
             <div class="card">
-                <h3>📊 Finances</h3>
+                <h3>📊 Tableau de Bord DAF</h3>
                 <div class="stats" id="dafStats"></div>
             </div>
             <div class="card">
                 <h3>⏳ Validations en attente</h3>
                 <div id="pendingList"></div>
             </div>
+            <div class="card">
+                <h3>📋 Dernières transactions</h3>
+                <div class="table-wrapper">
+                    <div id="dafTransactions"></div>
+                </div>
+            </div>
         </div>
 
         <!-- Commercial Section -->
         <div id="commercialSection" class="hidden">
             <div class="card">
-                <h3>📈 Performance</h3>
+                <h3>📈 Performance Commerciale</h3>
                 <div id="commercialData"></div>
             </div>
         </div>
@@ -96,30 +129,38 @@
         <div id="comptableSection" class="hidden">
             <div class="card">
                 <h3>💰 Nouvelle transaction</h3>
-                <select id="txType"><option value="entree">Entrée</option><option value="sortie">Sortie</option></select>
-                <input type="number" id="txMontant" placeholder="Montant">
+                <select id="txType">
+                    <option value="entree">📥 Entrée (Revenu) - Approuvé immédiatement</option>
+                    <option value="sortie">📤 Sortie (Dépense) - Attend approbation DG/DAF</option>
+                </select>
+                <input type="number" id="txMontant" placeholder="Montant (€)">
                 <input type="text" id="txLibelle" placeholder="Libellé">
-                <button onclick="createTransaction()">Enregistrer</button>
+                <button onclick="createTransaction()">💾 Enregistrer</button>
+                <div id="txMsg"></div>
             </div>
             <div class="card">
-                <h3>📋 Historique</h3>
-                <div id="txList"></div>
+                <h3>📋 Historique des transactions</h3>
+                <div class="table-wrapper">
+                    <div id="txList"></div>
+                </div>
             </div>
         </div>
 
         <!-- Agent Section -->
         <div id="agentSection" class="hidden">
             <div class="card">
-                <h3>📝 Enregistrer vente</h3>
-                <input type="text" id="venteProduit" placeholder="Produit">
+                <h3>📝 Enregistrer une vente</h3>
+                <input type="text" id="venteProduit" placeholder="Nom du produit">
                 <input type="number" id="venteQuantite" placeholder="Quantité">
-                <input type="number" id="ventePrix" placeholder="Prix unitaire">
-                <button onclick="createVente()">Enregistrer</button>
+                <input type="number" id="ventePrix" placeholder="Prix unitaire (€)">
+                <button onclick="createVente()">💾 Enregistrer la vente</button>
                 <div id="venteMsg"></div>
             </div>
             <div class="card">
                 <h3>📋 Mes ventes</h3>
-                <div id="mesVentes"></div>
+                <div class="table-wrapper">
+                    <div id="mesVentes"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -132,8 +173,17 @@
         
         const API = window.location.origin;
         
+        function downloadPDF(type) {
+            window.open(API + `/api/reports/${type}?token=${token}`, '_blank');
+        }
+        
         async function loadDashboard() {
-            document.getElementById('userInfo').innerHTML = `👑 ${userRole} | ${localStorage.getItem('userName') || ''}`;
+            document.getElementById('userInfo').innerHTML = getUserIcon() + ' ' + userRole;
+            
+            // Show PDF buttons for DG and DAF
+            if (userRole === 'DG' || userRole === 'DAF' || userRole === 'DIRECTEUR_COMMERCIAL') {
+                document.getElementById('pdfButtons').classList.remove('hidden');
+            }
             
             if (userRole === 'DG') {
                 document.getElementById('dgSection').classList.remove('hidden');
@@ -154,16 +204,43 @@
             }
         }
         
+        function getUserIcon() {
+            const icons = { 'DG': '👑', 'DAF': '📊', 'DIRECTEUR_COMMERCIAL': '🛒', 'COMPTABLE': '💰', 'AGENT_MARKETING': '📦' };
+            return icons[userRole] || '👤';
+        }
+        
         async function loadDGData() {
             const res = await fetch(API + '/api/transactions/dashboard/dg-daf', {
                 headers: { 'Authorization': 'Bearer ' + token }
             });
             const d = await res.json();
             document.getElementById('dgStats').innerHTML = `
-                <div class="stat-card"><h3>💰 Entrées</h3><p>${d.total_entrees || 0}€</p></div>
-                <div class="stat-card"><h3>📤 Sorties</h3><p>${d.total_sorties || 0}€</p></div>
-                <div class="stat-card"><h3>💵 Solde</h3><p>${d.montant_disponible || 0}€</p></div>
+                <div class="stat-card"><h4>💰 Entrées</h4><p>${(d.total_entrees || 0).toLocaleString()}€</p></div>
+                <div class="stat-card"><h4>📤 Sorties validées</h4><p>${(d.total_sorties_validees || 0).toLocaleString()}€</p></div>
+                <div class="stat-card"><h4>⏳ Sorties en attente</h4><p>${(d.total_sorties_attente || 0).toLocaleString()}€</p></div>
+                <div class="stat-card"><h4>💵 Solde</h4><p>${(d.montant_disponible || 0).toLocaleString()}€</p></div>
             `;
+            
+            // Show transactions in DG view too
+            if (d.transactions && d.transactions.length > 0) {
+                let txHtml = '<div class="table-wrapper"><table><thead><tr><th>Date</th><th>Type</th><th>Montant</th><th>Libellé</th><th>Statut</th></tr></thead><tbody>';
+                for (const tx of d.transactions.slice(0, 20)) {
+                    const statusIcon = tx.statut === 'APPROUVE' ? '✅' : (tx.statut === 'EN_ATTENTE' ? '⏳' : '❌');
+                    txHtml += `<tr><td>${new Date(tx.date).toLocaleDateString()}</td><td>${tx.type === 'entree' ? '📥' : '📤'}</td><td>${tx.montant.toLocaleString()}€</td><td>${tx.libelle}</td><td>${statusIcon} ${tx.statut}</td></tr>`;
+                }
+                txHtml += '</tbody></table></div>';
+                
+                // Add transaction card if not exists
+                if (!document.getElementById('dgTransactions')) {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.id = 'dgTransactions';
+                    card.innerHTML = '<h3>📋 Dernières transactions</h3>' + txHtml;
+                    document.getElementById('dgSection').appendChild(card);
+                } else {
+                    document.getElementById('dgTransactions').innerHTML = '<h3>📋 Dernières transactions</h3>' + txHtml;
+                }
+            }
         }
         
         async function loadUsers() {
@@ -175,9 +252,10 @@
             for (const u of users) {
                 if (u.role !== 'DG') {
                     html += `<tr>
-                        <td>${u.nom}</td><td>${u.email}</td><td>${u.role}</td>
-                        <td>${u.is_active ? '✅ Actif' : '❌ Inactif'}</td>
-                        <td>${u.is_active ? `<button onclick="disableUser(${u.id})">❌ Désactiver</button>` : `<button onclick="enableUser(${u.id})">✅ Activer</button>`}</td>
+                        <td>${u.nom}</td>
+                        <td>${u.role.replace('_', ' ')}</td>
+                        <td class="${u.is_active ? 'status-active' : 'status-inactive'}">${u.is_active ? '✅ Actif' : '❌ Inactif'}</td>
+                        <td>${u.is_active ? `<button class="btn-small" onclick="disableUser(${u.id})">🔒 Désactiver</button>` : `<button class="btn-small" onclick="enableUser(${u.id})">🔓 Activer</button>`}</td>
                     </tr>`;
                 }
             }
@@ -191,28 +269,30 @@
             const password = document.getElementById('newPassword').value;
             const role = document.getElementById('newRole').value;
             
+            if (!nom || !email || !username || !password) {
+                document.getElementById('createMsg').innerHTML = '<div class="error">⚠️ Tous les champs sont requis</div>';
+                return;
+            }
+            
             const res = await fetch(API + `/api/users/create?nom=${encodeURIComponent(nom)}&email=${email}&username=${username}&mot_de_passe=${password}&role=${role}`, {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + token }
             });
             if (res.ok) {
-                document.getElementById('createMsg').innerHTML = '<span class="success">✅ Utilisateur créé</span>';
-                setTimeout(() => document.getElementById('createMsg').innerHTML = '', 3000);
+                document.getElementById('createMsg').innerHTML = '<div class="success">✅ Utilisateur créé avec succès</div>';
+                document.getElementById('newNom').value = '';
+                document.getElementById('newEmail').value = '';
+                document.getElementById('newUsername').value = '';
+                document.getElementById('newPassword').value = '';
                 loadUsers();
+                setTimeout(() => document.getElementById('createMsg').innerHTML = '', 3000);
             } else {
-                document.getElementById('createMsg').innerHTML = '<span class="error">❌ Erreur</span>';
+                document.getElementById('createMsg').innerHTML = '<div class="error">❌ Erreur lors de la création</div>';
             }
         }
         
-        async function disableUser(id) {
-            await fetch(API + `/api/users/disable/${id}`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
-            loadUsers();
-        }
-        
-        async function enableUser(id) {
-            await fetch(API + `/api/users/enable/${id}`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
-            loadUsers();
-        }
+        async function disableUser(id) { await fetch(API + `/api/users/disable/${id}`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); loadUsers(); }
+        async function enableUser(id) { await fetch(API + `/api/users/enable/${id}`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); loadUsers(); }
         
         async function loadDAFData() {
             const res = await fetch(API + '/api/transactions/dashboard/dg-daf', {
@@ -220,24 +300,44 @@
             });
             const d = await res.json();
             document.getElementById('dafStats').innerHTML = `
-                <div class="stat-card"><h3>💰 Entrées</h3><p>${d.total_entrees || 0}€</p></div>
-                <div class="stat-card"><h3>📤 Sorties</h3><p>${d.total_sorties || 0}€</p></div>
-                <div class="stat-card"><h3>💵 Solde</h3><p>${d.montant_disponible || 0}€</p></div>
+                <div class="stat-card"><h4>💰 Entrées</h4><p>${(d.total_entrees || 0).toLocaleString()}€</p></div>
+                <div class="stat-card"><h4>📤 Sorties validées</h4><p>${(d.total_sorties_validees || 0).toLocaleString()}€</p></div>
+                <div class="stat-card"><h4>💵 Solde</h4><p>${(d.montant_disponible || 0).toLocaleString()}€</p></div>
             `;
             
+            // Pending validations
             const pRes = await fetch(API + '/api/transactions/pending', {
                 headers: { 'Authorization': 'Bearer ' + token }
             });
             const pending = await pRes.json();
             let html = '';
             for (const p of pending) {
-                html += `<div style="border:1px solid #ddd; padding:10px; margin:10px 0">
-                    <strong>${p.libelle}</strong> - ${p.montant}€<br>
-                    <button onclick="validateTx(${p.id}, 'APPROUVE')">✅ Approuver</button>
-                    <button onclick="validateTx(${p.id}, 'REJETE')">❌ Rejeter</button>
+                html += `<div class="pending-card">
+                    <strong>📝 ${p.libelle}</strong><br>
+                    💰 Montant: ${p.montant.toLocaleString()}€<br>
+                    📅 ${new Date(p.date).toLocaleDateString()}<br>
+                    <div class="pending-buttons">
+                        <button class="approve-btn" onclick="validateTx(${p.id}, 'APPROUVE')">✅ Approuver</button>
+                        <button class="reject-btn" onclick="validateTx(${p.id}, 'REJETE')">❌ Rejeter</button>
+                    </div>
                 </div>`;
             }
-            document.getElementById('pendingList').innerHTML = html || '<p>Aucune</p>';
+            document.getElementById('pendingList').innerHTML = html || '<p style="color:#888;">✅ Aucune validation en attente</p>';
+            
+            // Transactions list
+            let txHtml = '<div class="table-wrapper"><td><thead><tr><th>Date</th><th>Type</th><th>Montant</th><th>Libellé</th><th>Statut</th></tr></thead><tbody>';
+            for (const tx of d.transactions.slice(0, 20)) {
+                const statusIcon = tx.statut === 'APPROUVE' ? '✅' : (tx.statut === 'EN_ATTENTE' ? '⏳' : '❌');
+                txHtml += `<tr>
+                    <td>${new Date(tx.date).toLocaleDateString()}</td>
+                    <td>${tx.type === 'entree' ? '📥' : '📤'}</td>
+                    <td>${tx.montant.toLocaleString()}€</td>
+                    <td>${tx.libelle}</td>
+                    <td>${statusIcon} ${tx.statut}</td>
+                </tr>`;
+            }
+            txHtml += '</tbody></table></div>';
+            document.getElementById('dafTransactions').innerHTML = txHtml;
         }
         
         async function validateTx(id, action) {
@@ -253,12 +353,12 @@
                 headers: { 'Authorization': 'Bearer ' + token }
             });
             const d = await res.json();
-            let html = `<div class="stats"><div class="stat-card"><h3>📦 Ventes totales</h3><p>${d.quantite_vendue_totale || 0}</p></div></div>`;
-            html += '<h3>Performance</h3><table><tr><th>Agent</th><th>Quantité</th><th>Montant</th></tr>';
+            let html = `<div class="stats"><div class="stat-card"><h4>📦 Quantité vendue</h4><p>${d.quantite_vendue_totale || 0}</p></div></div>`;
+            html += '<div class="table-wrapper"><tr><thead><tr><th>Agent</th><th>Quantité</th><th>Montant</th></tr></thead><tbody>';
             for (const a of d.performance_agents || []) {
-                html += `<tr><td>${a.agent}</td><td>${a.quantite}</td><td>${a.montant}€</td></tr>`;
+                html += `<tr><td>${a.agent}</td><td>${a.quantite}</td><td>${a.montant.toLocaleString()}€</td></tr>`;
             }
-            html += '</table>';
+            html += '</tbody></table></div>';
             document.getElementById('commercialData').innerHTML = html;
         }
         
@@ -266,11 +366,27 @@
             const type = document.getElementById('txType').value;
             const montant = document.getElementById('txMontant').value;
             const libelle = document.getElementById('txLibelle').value;
-            await fetch(API + `/api/transactions/create?type=${type}&montant=${montant}&libelle=${encodeURIComponent(libelle)}`, {
+            
+            if (!montant || !libelle) {
+                document.getElementById('txMsg').innerHTML = '<div class="error">⚠️ Remplissez tous les champs</div>';
+                return;
+            }
+            
+            const res = await fetch(API + `/api/transactions/create?type=${type}&montant=${montant}&libelle=${encodeURIComponent(libelle)}`, {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + token }
             });
-            loadTransactions();
+            const data = await res.json();
+            
+            if (res.ok) {
+                document.getElementById('txMsg').innerHTML = `<div class="success">${data.message}</div>`;
+                document.getElementById('txMontant').value = '';
+                document.getElementById('txLibelle').value = '';
+                loadTransactions();
+                setTimeout(() => document.getElementById('txMsg').innerHTML = '', 3000);
+            } else {
+                document.getElementById('txMsg').innerHTML = '<div class="error">❌ Erreur</div>';
+            }
         }
         
         async function loadTransactions() {
@@ -278,11 +394,18 @@
                 headers: { 'Authorization': 'Bearer ' + token }
             });
             const txs = await res.json();
-            let html = '<table><tr><th>Date</th><th>Type</th><th>Montant</th><th>Libellé</th><th>Statut</th></tr>';
+            let html = '<div class="table-wrapper"><table><thead><tr><th>Date</th><th>Type</th><th>Montant</th><th>Libellé</th><th>Statut</th></tr></thead><tbody>';
             for (const tx of txs.slice(0, 20)) {
-                html += `<tr><td>${new Date(tx.date).toLocaleDateString()}</td><td>${tx.type}</td><td>${tx.montant}€</td><td>${tx.libelle}</td><td>${tx.statut}</td></tr>`;
+                const statusIcon = tx.statut === 'APPROUVE' ? '✅' : (tx.statut === 'EN_ATTENTE' ? '⏳' : '❌');
+                html += `<tr>
+                    <td>${new Date(tx.date).toLocaleDateString()}</td>
+                    <td>${tx.type === 'entree' ? '📥' : '📤'}</td>
+                    <td>${tx.montant.toLocaleString()}€</td>
+                    <td>${tx.libelle}</td>
+                    <td>${statusIcon} ${tx.statut}</td>
+                </tr>`;
             }
-            html += '</table>';
+            html += '</tbody></table></div>';
             document.getElementById('txList').innerHTML = html;
         }
         
@@ -290,11 +413,26 @@
             const produit = document.getElementById('venteProduit').value;
             const quantite = document.getElementById('venteQuantite').value;
             const prix = document.getElementById('ventePrix').value;
-            await fetch(API + `/api/ventes/create?produit=${produit}&quantite=${quantite}&prix_unitaire=${prix}`, {
+            
+            if (!produit || !quantite || !prix) {
+                document.getElementById('venteMsg').innerHTML = '<div class="error">⚠️ Tous les champs sont requis</div>';
+                return;
+            }
+            
+            const res = await fetch(API + `/api/ventes/create?produit=${encodeURIComponent(produit)}&quantite=${quantite}&prix_unitaire=${prix}`, {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + token }
             });
-            loadMyVentes();
+            if (res.ok) {
+                document.getElementById('venteMsg').innerHTML = '<div class="success">✅ Vente enregistrée !</div>';
+                document.getElementById('venteProduit').value = '';
+                document.getElementById('venteQuantite').value = '';
+                document.getElementById('ventePrix').value = '';
+                loadMyVentes();
+                setTimeout(() => document.getElementById('venteMsg').innerHTML = '', 3000);
+            } else {
+                document.getElementById('venteMsg').innerHTML = '<div class="error">❌ Erreur</div>';
+            }
         }
         
         async function loadMyVentes() {
@@ -302,18 +440,25 @@
                 headers: { 'Authorization': 'Bearer ' + token }
             });
             const ventes = await res.json();
-            let html = '<table><tr><th>Produit</th><th>Quantité</th><th>Prix</th><th>Date</th></tr>';
-            for (const v of ventes) {
-                html += `<tr><td>${v.produit}</td><td>${v.quantite}</td><td>${v.prix_unitaire}€</td><td>${new Date(v.date).toLocaleDateString()}</td></tr>`;
+            if (ventes.length === 0) {
+                document.getElementById('mesVentes').innerHTML = '<p style="color:#888; text-align:center;">📭 Aucune vente enregistrée</p>';
+                return;
             }
-            html += '</table>';
+            let html = '<div class="table-wrapper"></table><thead><tr><th>Produit</th><th>Qté</th><th>Prix</th><th>Total</th><th>Date</th></tr></thead><tbody>';
+            for (const v of ventes) {
+                html += `<tr>
+                    <td>${v.produit}</td>
+                    <td>${v.quantite}</td>
+                    <td>${v.prix_unitaire}€</td
+                    <td>${(v.quantite * v.prix_unitaire).toLocaleString()}€</td
+                    <td>${new Date(v.date).toLocaleDateString()}</td
+                </tr>`;
+            }
+            html += '</tbody></table></div>';
             document.getElementById('mesVentes').innerHTML = html;
         }
         
-        function logout() {
-            localStorage.clear();
-            window.location.href = '/';
-        }
+        function logout() { localStorage.clear(); window.location.href = '/'; }
         
         loadDashboard();
     </script>

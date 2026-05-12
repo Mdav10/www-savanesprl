@@ -1,1 +1,1 @@
-from . import auth, users, transactions, ventes, logs
+from . import auth, users, transactions, ventes, logs, reports

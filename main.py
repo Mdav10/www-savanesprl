@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.database import engine, Base, SessionLocal
-from app.routes import auth, users, transactions, ventes, logs
+from app.routes import auth, users, transactions, ventes, logs, reports
 from app.routes.auth import create_default_dg
 
 # Create tables
@@ -50,6 +50,7 @@ app.include_router(users.router)
 app.include_router(transactions.router)
 app.include_router(ventes.router)
 app.include_router(logs.router)
+app.include_router(reports.router)
 
 @app.get("/health")
 def health():
