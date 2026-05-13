@@ -14,7 +14,7 @@
         .logout-btn { background: #dc3545; color: white; border: none; padding: 6px 16px; border-radius: 20px; font-size: 12px; cursor: pointer; }
         .container { padding: 16px; max-width: 600px; margin: 0 auto; }
         .card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .card h3 { font-size: 16px; margin-bottom: 12px; color: #333; }
+        .card h3 { font-size: 16px; margin-bottom: 12px; color: #333; border-left: 4px solid #007bff; padding-left: 10px; }
         .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         .stat-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px; border-radius: 12px; text-align: center; }
         .stat-card h4 { font-size: 11px; opacity: 0.9; margin-bottom: 4px; }
@@ -26,6 +26,7 @@
         .btn-pdf { background: #dc3545; margin-top: 8px; }
         .btn-approve { background: #28a745; }
         .btn-reject { background: #dc3545; }
+        .btn-create { background: #28a745; }
         .table-wrapper { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 400px; }
         th, td { padding: 10px 6px; text-align: left; border-bottom: 1px solid #eee; }
@@ -33,16 +34,13 @@
         .hidden { display: none; }
         .success { color: #28a745; background: #e6ffed; padding: 10px; border-radius: 8px; margin-top: 8px; font-size: 12px; }
         .error { color: #dc3545; background: #ffe5e5; padding: 10px; border-radius: 8px; margin-top: 8px; font-size: 12px; }
+        .info { color: #856404; background: #fff3cd; padding: 10px; border-radius: 8px; margin-top: 8px; font-size: 12px; }
         .pending-card { background: #f8f9fa; border-radius: 12px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #ffc107; }
         .product-item { background: #f8f9fa; padding: 10px; margin: 8px 0; border-radius: 10px; }
-        .product-name { font-weight: bold; font-size: 14px; }
-        .product-price { color: #28a745; font-size: 13px; }
         .flex { display: flex; gap: 8px; flex-wrap: wrap; }
         .flex button { flex: 1; }
         .loading { text-align: center; padding: 40px; color: #666; }
-        .nav-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; }
-        .nav-tab { background: white; color: #666; padding: 8px 16px; border-radius: 20px; font-size: 13px; white-space: nowrap; cursor: pointer; }
-        .nav-tab.active { background: #007bff; color: white; }
+        .empty { text-align: center; padding: 20px; color: #999; font-style: italic; }
     </style>
 </head>
 <body>
@@ -60,241 +58,118 @@
     <script>
         const token = localStorage.getItem('token');
         const userRole = localStorage.getItem('userRole');
-        const userName = localStorage.getItem('userName');
         
-        if (!token) {
-            window.location.href = '/';
-        }
+        if (!token) window.location.href = '/';
         
         const API = window.location.origin;
         
         document.getElementById('userInfo').innerHTML = getRoleIcon() + ' ' + userRole;
         
         function getRoleIcon() {
-            const icons = {
-                'DG': '👑', 'DAF': '📊', 'DT': '🔧', 
-                'DIRECTEUR_COMMERCIAL': '🛒', 'COMPTABLE': '💰', 
-                'AGENT_STOCK': '📦', 'AGENT_COMMERCIAL': '📈'
-            };
+            const icons = { 'DG': '👑', 'DAF': '📊', 'DT': '🔧', 'DIRECTEUR_COMMERCIAL': '🛒', 'COMPTABLE': '💰', 'AGENT_STOCK': '📦', 'AGENT_COMMERCIAL': '📈' };
             return icons[userRole] || '👤';
         }
         
         async function apiCall(url, options = {}) {
             const res = await fetch(API + url, {
                 ...options,
-                headers: { 'Authorization': 'Bearer ' + token, ...options.headers }
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...options.headers }
             });
-            if (!res.ok) throw new Error(await res.text());
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || res.statusText);
+            }
             return res.json();
         }
         
         async function loadDashboard() {
             try {
                 let html = '';
-                
-                if (userRole === 'AGENT_STOCK') {
-                    html = await stockAgentView();
-                } else if (userRole === 'AGENT_COMMERCIAL') {
-                    html = await commercialAgentView();
-                } else if (userRole === 'COMPTABLE') {
-                    html = await comptableView();
-                } else if (userRole === 'DT') {
-                    html = await dtView();
-                } else if (userRole === 'DAF') {
-                    html = await dafView();
-                } else if (userRole === 'DIRECTEUR_COMMERCIAL') {
-                    html = await dcView();
-                } else if (userRole === 'DG') {
-                    html = await dgView();
-                } else {
-                    html = '<div class="card"><p>Rôle non reconnu</p></div>';
-                }
-                
+                if (userRole === 'DG') html = await dgView();
+                else if (userRole === 'COMPTABLE') html = await comptableView();
+                else if (userRole === 'DAF') html = await dafView();
+                else if (userRole === 'DT') html = await dtView();
+                else if (userRole === 'DIRECTEUR_COMMERCIAL') html = await dcView();
+                else if (userRole === 'AGENT_STOCK') html = await stockView();
+                else if (userRole === 'AGENT_COMMERCIAL') html = await commercialView();
+                else html = '<div class="card"><p>Rôle non reconnu</p></div>';
                 document.getElementById('app').innerHTML = html;
             } catch (err) {
-                document.getElementById('app').innerHTML = '<div class="card error">❌ Erreur de chargement: ' + err.message + '</div>';
+                document.getElementById('app').innerHTML = `<div class="card error">❌ Erreur: ${err.message}</div>`;
             }
-        }
-        
-        async function stockAgentView() {
-            const products = await apiCall('/api/products/');
-            const stockData = await apiCall('/api/stock/current');
-            
-            let html = '<div class="card"><h3>📋 Gestion des stocks</h3>';
-            
-            for (const p of products) {
-                const stock = stockData.find(s => s.product_id === p.id) || { quantite_disponible: 0 };
-                html += `
-                    <div class="product-item">
-                        <div class="product-name">${p.nom}</div>
-                        <div class="product-price">💰 ${p.prix_unitaire}€</div>
-                        <div>📦 Stock: ${stock.quantite_disponible}</div>
-                        <div class="flex">
-                            <input type="number" id="entree_${p.id}" placeholder="Entrée" style="width:30%">
-                            <input type="number" id="sortie_${p.id}" placeholder="Sortie" style="width:30%">
-                            <button class="btn-small" onclick="updateStock(${p.id})">✓ Mettre à jour</button>
-                        </div>
-                    </div>
-                `;
-            }
-            html += '</div>';
-            return html;
-        }
-        
-        async function updateStock(productId) {
-            const entree = document.getElementById(`entree_${productId}`).value || 0;
-            const sortie = document.getElementById(`sortie_${productId}`).value || 0;
-            await apiCall(`/api/stock/movement?product_id=${productId}&quantite_entree=${entree}&quantite_sortie=${sortie}`, { method: 'POST' });
-            location.reload();
-        }
-        
-        async function commercialAgentView() {
-            const products = await apiCall('/api/products/');
-            const revenue = await apiCall('/api/sales/total-revenue');
-            const reports = await apiCall('/api/sales/my-reports');
-            
-            return `
-                <div class="card">
-                    <h3>💰 Ventes</h3>
-                    <div class="stat-card"><p>${(revenue.total_revenue || 0).toLocaleString()}€</p></div>
-                </div>
-                <div class="card">
-                    <h3>📝 Nouvelle vente</h3>
-                    <select id="productSelect">${products.map(p => `<option value="${p.id}">${p.nom} - ${p.prix_unitaire}€</option>`).join('')}</select>
-                    <input type="number" id="saleQty" placeholder="Quantité">
-                    <button onclick="createSale()">💾 Enregistrer</button>
-                    <div id="saleMsg"></div>
-                </div>
-                <div class="card">
-                    <h3>📋 Mes ventes</h3>
-                    <div class="table-wrapper"><table><thead><tr><th>Date</th><th>Produit</th><th>Qté</th><th>Total</th></tr></thead><tbody>
-                        ${reports.map(r => `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td>${r.product}</td><td>${r.quantite}</td><td>${r.montant_total.toLocaleString()}€</td></tr>`).join('')}
-                    </tbody></table></div>
-                </div>
-            `;
-        }
-        
-        async function createSale() {
-            const productId = document.getElementById('productSelect').value;
-            const qty = document.getElementById('saleQty').value;
-            await apiCall(`/api/sales/report?product_id=${productId}&quantite=${qty}`, { method: 'POST' });
-            document.getElementById('saleMsg').innerHTML = '<div class="success">✅ Vente enregistrée</div>';
-            setTimeout(() => location.reload(), 1500);
-        }
-        
-        async function comptableView() {
-            const data = await apiCall('/api/transactions/dashboard');
-            return `
-                <div class="card"><h3>💰 Finances</h3><div class="stats">
-                    <div class="stat-card"><h4>Entrées</h4><p>${(data.total_entrees || 0).toLocaleString()}€</p></div>
-                    <div class="stat-card"><h4>Sorties</h4><p>${(data.total_sorties || 0).toLocaleString()}€</p></div>
-                    <div class="stat-card"><h4>Solde</h4><p>${(data.solde || 0).toLocaleString()}€</p></div>
-                </div></div>
-                <div class="card"><h3>📝 Transaction</h3>
-                    <select id="txType"><option value="entree">📥 Entrée</option><option value="sortie">📤 Sortie (approbation requise)</option></select>
-                    <input type="number" id="txMontant" placeholder="Montant"><input type="text" id="txLibelle" placeholder="Libellé">
-                    <button onclick="createTransaction()">💾 Enregistrer</button><div id="txMsg"></div>
-                </div>
-                <div class="card"><h3>📊 PDF</h3>
-                    <button class="btn-pdf" onclick="downloadPDF('transactions')">📄 Télécharger PDF</button>
-                </div>
-                <div class="card"><h3>📋 Historique</h3>
-                    <div class="table-wrapper"><table><thead><tr><th>Date</th><th>Type</th><th>Montant</th><th>Statut</th></tr></thead><tbody>
-                        ${data.transactions.slice(0,20).map(t => `<tr><td>${new Date(t.date).toLocaleDateString()}</td><td>${t.type === 'entree' ? '📥' : '📤'}</td><td>${t.montant.toLocaleString()}€</td><td>${t.statut}</td></tr>`).join('')}
-                    </tbody></table></div>
-                </div>
-            `;
-        }
-        
-        async function createTransaction() {
-            const type = document.getElementById('txType').value;
-            const montant = document.getElementById('txMontant').value;
-            const libelle = document.getElementById('txLibelle').value;
-            const res = await apiCall(`/api/transactions/create?type=${type}&montant=${montant}&libelle=${encodeURIComponent(libelle)}`, { method: 'POST' });
-            document.getElementById('txMsg').innerHTML = `<div class="success">${res.message}</div>`;
-            setTimeout(() => location.reload(), 1500);
-        }
-        
-        async function dtView() {
-            const products = await apiCall('/api/products/');
-            const stockReports = await apiCall('/api/stock/reports/all');
-            return `
-                <div class="card"><h3>📋 Produits</h3>${products.map(p => `<div class="product-item"><b>${p.nom}</b> - ${p.prix_unitaire}€</div>`).join('')}</div>
-                <div class="card"><h3>📦 Rapports stock</h3><button class="btn-pdf" onclick="downloadPDF('stock')">📄 PDF</button>
-                <div class="table-wrapper"><table><thead><tr><th>Date</th><th>Produit</th><th>Entrée</th><th>Sortie</th><th>Disponible</th></tr></thead><tbody>
-                    ${stockReports.map(r => `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td>${r.product}</td><td>${r.quantite_entree}</td><td>${r.quantite_sortie}</td><td>${r.quantite_disponible}</td></tr>`).join('')}
-                </tbody></table></div></div>
-            `;
-        }
-        
-        async function dafView() {
-            const finance = await apiCall('/api/transactions/dashboard');
-            const pending = await apiCall('/api/transactions/pending');
-            return `
-                <div class="card"><h3>💰 Finances</h3><div class="stats">
-                    <div class="stat-card"><h4>Entrées</h4><p>${(finance.total_entrees || 0).toLocaleString()}€</p></div>
-                    <div class="stat-card"><h4>Sorties</h4><p>${(finance.total_sorties || 0).toLocaleString()}€</p></div>
-                    <div class="stat-card"><h4>Solde</h4><p>${(finance.solde || 0).toLocaleString()}€</p></div>
-                </div></div>
-                <div class="card"><h3>⏳ Validations</h3>
-                    ${pending.map(p => `<div class="pending-card"><b>${p.libelle}</b><br>💰 ${p.montant.toLocaleString()}€<br><div class="flex"><button class="btn-approve" onclick="validateTx(${p.id},'APPROUVE')">✅ Approuver</button><button class="btn-reject" onclick="rejectTx(${p.id})">❌ Rejeter</button></div></div>`).join('')}
-                    ${pending.length === 0 ? '<p>✅ Aucune</p>' : ''}
-                </div>
-                <div class="card"><h3>📊 PDF</h3><button class="btn-pdf" onclick="downloadPDF('financial')">📄 Télécharger PDF</button></div>
-            `;
-        }
-        
-        async function validateTx(id, action) { await apiCall(`/api/transactions/validate/${id}?action=${action}`, { method: 'POST' }); location.reload(); }
-        async function rejectTx(id) { const raison = prompt('Raison du rejet:'); if(raison) await apiCall(`/api/transactions/validate/${id}?action=REJETE&raison=${encodeURIComponent(raison)}`, { method: 'POST' }); location.reload(); }
-        
-        async function dcView() {
-            const products = await apiCall('/api/products/');
-            const sales = await apiCall('/api/sales/all-reports');
-            const revenue = await apiCall('/api/sales/total-revenue');
-            return `
-                <div class="card"><h3>💰 CA Total: ${(revenue.total_revenue || 0).toLocaleString()}€</h3></div>
-                <div class="card"><h3>📦 Produits</h3><input type="text" id="newProduct" placeholder="Nom"><input type="number" id="newPrice" placeholder="Prix"><button onclick="createProduct()">➕ Ajouter</button><div id="productMsg"></div>
-                ${products.map(p => `<div class="product-item"><b>${p.nom}</b> - ${p.prix_unitaire}€</div>`).join('')}</div>
-                <div class="card"><h3>📊 PDF</h3><button class="btn-pdf" onclick="downloadPDF('sales')">📄 Télécharger PDF</button></div>
-                <div class="card"><h3>📋 Ventes</h3><div class="table-wrapper"><table><thead><tr><th>Date</th><th>Agent</th><th>Produit</th><th>Qté</th><th>Total</th></tr></thead><tbody>
-                    ${sales.map(s => `<tr><td>${new Date(s.date).toLocaleDateString()}</td><td>${s.agent}</td><td>${s.product}</td><td>${s.quantite}</td><td>${s.montant_total.toLocaleString()}€</td></tr>`).join('')}
-                </tbody></table></div></div>
-            `;
-        }
-        
-        async function createProduct() {
-            const nom = document.getElementById('newProduct').value;
-            const prix = document.getElementById('newPrice').value;
-            await apiCall(`/api/products/create?nom=${encodeURIComponent(nom)}&prix_unitaire=${prix}`, { method: 'POST' });
-            document.getElementById('productMsg').innerHTML = '<div class="success">✅ Produit ajouté</div>';
-            setTimeout(() => location.reload(), 1500);
         }
         
         async function dgView() {
-            const products = await apiCall('/api/products/');
-            const stockReports = await apiCall('/api/stock/reports/all');
-            const sales = await apiCall('/api/sales/all-reports');
-            const finance = await apiCall('/api/transactions/dashboard');
-            const pending = await apiCall('/api/transactions/pending');
+            // Get existing users
+            let users = [];
+            try { users = await apiCall('/api/users/'); } catch(e) { users = []; }
             
             return `
-                <div class="card"><h3>👥 Créer utilisateur</h3>
-                    <input type="text" id="newNom" placeholder="Nom"><input type="email" id="newEmail" placeholder="Email">
-                    <input type="text" id="newUsername" placeholder="Login"><input type="password" id="newPassword" placeholder="Mot de passe">
-                    <select id="newRole"><option value="DT">DT</option><option value="DAF">DAF</option><option value="DIRECTEUR_COMMERCIAL">DC</option><option value="COMPTABLE">Comptable</option><option value="AGENT_STOCK">Agent Stock</option><option value="AGENT_COMMERCIAL">Agent Commercial</option></select>
-                    <button onclick="createUser()">➕ Créer</button><div id="userMsg"></div>
+                <div class="card">
+                    <h3>👥 Créer un utilisateur</h3>
+                    <input type="text" id="newNom" placeholder="Nom complet" required>
+                    <input type="email" id="newEmail" placeholder="Email" required>
+                    <input type="text" id="newUsername" placeholder="Nom d'utilisateur" required>
+                    <input type="password" id="newPassword" placeholder="Mot de passe" required>
+                    <select id="newRole">
+                        <option value="DT">🔧 Directeur Technique (DT)</option>
+                        <option value="DAF">📊 Directeur Administratif (DAF)</option>
+                        <option value="DIRECTEUR_COMMERCIAL">🛒 Directeur Commercial (DC)</option>
+                        <option value="COMPTABLE">💰 Comptable</option>
+                        <option value="AGENT_STOCK">📦 Agent Stock</option>
+                        <option value="AGENT_COMMERCIAL">📈 Agent Commercial</option>
+                    </select>
+                    <button class="btn-create" onclick="createUser()">➕ Créer l'utilisateur</button>
+                    <div id="createMsg"></div>
                 </div>
-                <div class="card"><h3>💰 Finances</h3><div class="stats">
-                    <div class="stat-card"><h4>Entrées</h4><p>${(finance.total_entrees || 0).toLocaleString()}€</p></div>
-                    <div class="stat-card"><h4>Sorties</h4><p>${(finance.total_sorties || 0).toLocaleString()}€</p></div>
-                    <div class="stat-card"><h4>Solde</h4><p>${(finance.solde || 0).toLocaleString()}€</p></div>
-                </div></div>
-                <div class="card"><h3>⏳ Validations</h3>
-                    ${pending.map(p => `<div class="pending-card"><b>${p.libelle}</b><br>💰 ${p.montant.toLocaleString()}€<br><div class="flex"><button onclick="validateTx(${p.id},'APPROUVE')">✅ Approuver</button><button onclick="rejectTx(${p.id})">❌ Rejeter</button></div></div>`).join('')}
+                
+                <div class="card">
+                    <h3>👥 Utilisateurs existants</h3>
+                    ${users.length === 0 ? '<div class="empty">📭 Aucun utilisateur créé</div>' : `
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th>Nom</th><th>Login</th><th>Rôle</th><th>Statut</th></tr></thead>
+                                <tbody>
+                                    ${users.filter(u => u.role !== 'DG').map(u => `
+                                        <tr>
+                                            <td>${u.nom}</td>
+                                            <td>${u.username}</td>
+                                            <td>${u.role}</td>
+                                            <td>${u.is_active ? '✅ Actif' : '❌ Inactif'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `}
                 </div>
-                <div class="card"><h3>📦 Produits</h3><input type="text" id="newProduct" placeholder="Nom"><input type="number" id="newPrice" placeholder="Prix"><button onclick="createProduct()">➕ Ajouter</button>
-                ${products.map(p => `<div class="product-item"><b>${p.nom}</b> - ${p.prix_unitaire}€</div>`).join('')}</div>
-                <div class="card"><h3>📊 PDF</h3><button class="btn-pdf" onclick="downloadPDF('transactions')">📄 Transactions</button><button class="btn-pdf" onclick="downloadPDF('financial')">📄 Financier</button><button class="btn-pdf" onclick="downloadPDF('sales')">📄 Ventes</button><button class="btn-pdf" onclick="downloadPDF('stock')">📄 Stock</button></div>
+                
+                <div class="card">
+                    <h3>📦 Gestion des produits</h3>
+                    <input type="text" id="productName" placeholder="Nom du produit">
+                    <input type="number" id="productPrice" placeholder="Prix unitaire (€)">
+                    <button onclick="createProduct()">➕ Ajouter un produit</button>
+                    <div id="productMsg"></div>
+                    <div id="productList"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>💰 Finances</h3>
+                    <div id="financeData" class="stats"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>⏳ Validations en attente</h3>
+                    <div id="pendingList"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>📊 Télécharger rapports PDF</h3>
+                    <button class="btn-pdf" onclick="downloadPDF('transactions')">📄 Transactions</button>
+                    <button class="btn-pdf" onclick="downloadPDF('financial')">📄 Financier</button>
+                    <button class="btn-pdf" onclick="downloadPDF('sales')">📄 Ventes</button>
+                    <button class="btn-pdf" onclick="downloadPDF('stock')">📄 Stock</button>
+                </div>
             `;
         }
         
@@ -304,13 +179,464 @@
             const username = document.getElementById('newUsername').value;
             const password = document.getElementById('newPassword').value;
             const role = document.getElementById('newRole').value;
-            await apiCall(`/api/users/create?nom=${encodeURIComponent(nom)}&email=${email}&username=${username}&mot_de_passe=${password}&role=${role}`, { method: 'POST' });
-            document.getElementById('userMsg').innerHTML = '<div class="success">✅ Utilisateur créé</div>';
-            setTimeout(() => location.reload(), 1500);
+            
+            if (!nom || !email || !username || !password) {
+                document.getElementById('createMsg').innerHTML = '<div class="error">⚠️ Tous les champs sont requis</div>';
+                return;
+            }
+            
+            try {
+                const res = await fetch(API + `/api/users/create?nom=${encodeURIComponent(nom)}&email=${email}&username=${username}&mot_de_passe=${password}&role=${role}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.ok) {
+                    document.getElementById('createMsg').innerHTML = '<div class="success">✅ Utilisateur créé avec succès</div>';
+                    document.getElementById('newNom').value = '';
+                    document.getElementById('newEmail').value = '';
+                    document.getElementById('newUsername').value = '';
+                    document.getElementById('newPassword').value = '';
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    const err = await res.json();
+                    document.getElementById('createMsg').innerHTML = `<div class="error">❌ ${err.detail}</div>`;
+                }
+            } catch(e) {
+                document.getElementById('createMsg').innerHTML = `<div class="error">❌ Erreur: ${e.message}</div>`;
+            }
+        }
+        
+        async function createProduct() {
+            const nom = document.getElementById('productName').value;
+            const prix = document.getElementById('productPrice').value;
+            if (!nom || !prix) {
+                document.getElementById('productMsg').innerHTML = '<div class="error">⚠️ Nom et prix requis</div>';
+                return;
+            }
+            try {
+                await apiCall(`/api/products/create?nom=${encodeURIComponent(nom)}&prix_unitaire=${prix}`, { method: 'POST' });
+                document.getElementById('productMsg').innerHTML = '<div class="success">✅ Produit ajouté</div>';
+                document.getElementById('productName').value = '';
+                document.getElementById('productPrice').value = '';
+                loadProducts();
+            } catch(e) {
+                document.getElementById('productMsg').innerHTML = `<div class="error">❌ ${e.message}</div>`;
+            }
+        }
+        
+        async function loadProducts() {
+            try {
+                const products = await apiCall('/api/products/');
+                const container = document.getElementById('productList');
+                if (!container) return;
+                if (products.length === 0) {
+                    container.innerHTML = '<div class="empty">📭 Aucun produit</div>';
+                } else {
+                    container.innerHTML = `
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th>Produit</th><th>Prix</th></tr></thead>
+                                <tbody>
+                                    ${products.map(p => `<tr><td>${p.nom}</td><td>${p.prix_unitaire}€</td></tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            } catch(e) {}
+        }
+        
+        async function loadFinance() {
+            try {
+                const data = await apiCall('/api/transactions/dashboard');
+                const container = document.getElementById('financeData');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="stat-card"><h4>💰 Entrées</h4><p>${(data.total_entrees || 0).toLocaleString()}€</p></div>
+                        <div class="stat-card"><h4>📤 Sorties</h4><p>${(data.total_sorties || 0).toLocaleString()}€</p></div>
+                        <div class="stat-card"><h4>💵 Solde</h4><p>${(data.solde || 0).toLocaleString()}€</p></div>
+                    `;
+                }
+            } catch(e) {}
+        }
+        
+        async function loadPending() {
+            try {
+                const pending = await apiCall('/api/transactions/pending');
+                const container = document.getElementById('pendingList');
+                if (!container) return;
+                if (pending.length === 0) {
+                    container.innerHTML = '<div class="empty">✅ Aucune validation en attente</div>';
+                } else {
+                    container.innerHTML = pending.map(p => `
+                        <div class="pending-card">
+                            <strong>${p.libelle}</strong><br>
+                            💰 ${p.montant.toLocaleString()}€<br>
+                            📅 ${new Date(p.date).toLocaleDateString()}<br>
+                            <div class="flex">
+                                <button class="btn-approve" onclick="validateTx(${p.id}, 'APPROUVE')">✅ Approuver</button>
+                                <button class="btn-reject" onclick="validateTx(${p.id}, 'REJETE')">❌ Rejeter</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch(e) {}
+        }
+        
+        async function validateTx(id, action) {
+            try {
+                await apiCall(`/api/transactions/validate/${id}?action=${action}`, { method: 'POST' });
+                location.reload();
+            } catch(e) {
+                alert('Erreur: ' + e.message);
+            }
+        }
+        
+        async function comptableView() {
+            let data = { total_entrees: 0, total_sorties: 0, solde: 0, transactions: [] };
+            try { data = await apiCall('/api/transactions/dashboard'); } catch(e) {}
+            
+            return `
+                <div class="card">
+                    <h3>💰 Finances</h3>
+                    <div class="stats">
+                        <div class="stat-card"><h4>Entrées</h4><p>${(data.total_entrees || 0).toLocaleString()}€</p></div>
+                        <div class="stat-card"><h4>Sorties</h4><p>${(data.total_sorties || 0).toLocaleString()}€</p></div>
+                        <div class="stat-card"><h4>Solde</h4><p>${(data.solde || 0).toLocaleString()}€</p></div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>📝 Nouvelle transaction</h3>
+                    <select id="txType">
+                        <option value="entree">📥 Entrée (Revenu)</option>
+                        <option value="sortie">📤 Sortie (Dépense - besoin approbation)</option>
+                    </select>
+                    <input type="number" id="txMontant" placeholder="Montant (€)">
+                    <input type="text" id="txLibelle" placeholder="Libellé">
+                    <button onclick="createTransaction()">💾 Enregistrer</button>
+                    <div id="txMsg"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>📋 Historique des transactions</h3>
+                    ${data.transactions.length === 0 ? '<div class="empty">📭 Aucune transaction</div>' : `
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th>Date</th><th>Type</th><th>Montant</th><th>Libellé</th><th>Statut</th></tr></thead>
+                                <tbody>
+                                    ${data.transactions.slice(0,20).map(t => `
+                                        <tr>
+                                            <td>${new Date(t.date).toLocaleDateString()}</td>
+                                            <td>${t.type === 'entree' ? '📥' : '📤'}</td>
+                                            <td>${t.montant.toLocaleString()}€</td>
+                                            <td>${t.libelle}</td>
+                                            <td>${t.statut === 'APPROUVE' ? '✅' : (t.statut === 'EN_ATTENTE' ? '⏳' : '❌')}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `}
+                </div>
+                
+                <div class="card">
+                    <h3>📊 Télécharger rapports PDF</h3>
+                    <button class="btn-pdf" onclick="downloadPDF('transactions')">📄 Transactions PDF</button>
+                </div>
+            `;
+        }
+        
+        async function createTransaction() {
+            const type = document.getElementById('txType').value;
+            const montant = document.getElementById('txMontant').value;
+            const libelle = document.getElementById('txLibelle').value;
+            if (!montant || !libelle) {
+                document.getElementById('txMsg').innerHTML = '<div class="error">⚠️ Tous les champs requis</div>';
+                return;
+            }
+            try {
+                const res = await apiCall(`/api/transactions/create?type=${type}&montant=${montant}&libelle=${encodeURIComponent(libelle)}`, { method: 'POST' });
+                document.getElementById('txMsg').innerHTML = `<div class="success">${res.message}</div>`;
+                setTimeout(() => location.reload(), 1500);
+            } catch(e) {
+                document.getElementById('txMsg').innerHTML = `<div class="error">❌ ${e.message}</div>`;
+            }
+        }
+        
+        async function dafView() {
+            let data = { total_entrees: 0, total_sorties: 0, solde: 0 };
+            let pending = [];
+            try { data = await apiCall('/api/transactions/dashboard'); } catch(e) {}
+            try { pending = await apiCall('/api/transactions/pending'); } catch(e) {}
+            
+            return `
+                <div class="card">
+                    <h3>💰 Finances</h3>
+                    <div class="stats">
+                        <div class="stat-card"><h4>Entrées</h4><p>${(data.total_entrees || 0).toLocaleString()}€</p></div>
+                        <div class="stat-card"><h4>Sorties</h4><p>${(data.total_sorties || 0).toLocaleString()}€</p></div>
+                        <div class="stat-card"><h4>Solde</h4><p>${(data.solde || 0).toLocaleString()}€</p></div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>⏳ Validations en attente</h3>
+                    ${pending.length === 0 ? '<div class="empty">✅ Aucune validation en attente</div>' : pending.map(p => `
+                        <div class="pending-card">
+                            <strong>${p.libelle}</strong><br>
+                            💰 ${p.montant.toLocaleString()}€<br>
+                            📅 ${new Date(p.date).toLocaleDateString()}<br>
+                            <div class="flex">
+                                <button class="btn-approve" onclick="validateTx(${p.id}, 'APPROUVE')">✅ Approuver</button>
+                                <button class="btn-reject" onclick="validateTx(${p.id}, 'REJETE')">❌ Rejeter</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="card">
+                    <h3>📊 Télécharger rapports PDF</h3>
+                    <button class="btn-pdf" onclick="downloadPDF('financial')">📄 Rapport Financier PDF</button>
+                </div>
+            `;
+        }
+        
+        async function dtView() {
+            let products = [];
+            let stockReports = [];
+            try { products = await apiCall('/api/products/'); } catch(e) {}
+            try { stockReports = await apiCall('/api/stock/reports/all'); } catch(e) {}
+            
+            return `
+                <div class="card">
+                    <h3>📋 Produits</h3>
+                    ${products.length === 0 ? '<div class="empty">📭 Aucun produit</div>' : products.map(p => `<div class="product-item"><b>${p.nom}</b> - ${p.prix_unitaire}€</div>`).join('')}
+                </div>
+                
+                <div class="card">
+                    <h3>📦 Mouvements de stock</h3>
+                    ${stockReports.length === 0 ? '<div class="empty">📭 Aucun mouvement de stock</div>' : `
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th>Date</th><th>Produit</th><th>Entrée</th><th>Sortie</th><th>Disponible</th></tr></thead>
+                                <tbody>
+                                    ${stockReports.map(r => `
+                                        <tr>
+                                            <td>${new Date(r.date).toLocaleDateString()}</td>
+                                            <td>${r.product}</td>
+                                            <td>${r.quantite_entree}</td>
+                                            <td>${r.quantite_sortie}</td>
+                                            <td>${r.quantite_disponible}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `}
+                </div>
+                
+                <div class="card">
+                    <h3>📊 Télécharger rapports PDF</h3>
+                    <button class="btn-pdf" onclick="downloadPDF('stock')">📄 Rapport Stock PDF</button>
+                </div>
+            `;
+        }
+        
+        async function dcView() {
+            let products = [];
+            let sales = [];
+            let revenue = { total_revenue: 0 };
+            try { products = await apiCall('/api/products/'); } catch(e) {}
+            try { sales = await apiCall('/api/sales/all-reports'); } catch(e) {}
+            try { revenue = await apiCall('/api/sales/total-revenue'); } catch(e) {}
+            
+            return `
+                <div class="card">
+                    <h3>💰 Chiffre d'affaires total</h3>
+                    <div class="stat-card"><p>${(revenue.total_revenue || 0).toLocaleString()}€</p></div>
+                </div>
+                
+                <div class="card">
+                    <h3>📦 Gestion des produits</h3>
+                    <div class="flex">
+                        <input type="text" id="newProduct" placeholder="Nom du produit" style="flex:2">
+                        <input type="number" id="newPrice" placeholder="Prix" style="flex:1">
+                        <button onclick="createProduct()" style="flex:1">➕ Ajouter</button>
+                    </div>
+                    <div id="productMsgDC"></div>
+                    ${products.length === 0 ? '<div class="empty">📭 Aucun produit</div>' : `
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th>Produit</th><th>Prix</th></tr></thead>
+                                <tbody>
+                                    ${products.map(p => `<tr><td>${p.nom}</td><td>${p.prix_unitaire}€</td></tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `}
+                </div>
+                
+                <div class="card">
+                    <h3>📋 Rapports des ventes</h3>
+                    ${sales.length === 0 ? '<div class="empty">📭 Aucune vente enregistrée</div>' : `
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th>Date</th><th>Agent</th><th>Produit</th><th>Quantité</th><th>Total</th></tr></thead>
+                                <tbody>
+                                    ${sales.map(s => `
+                                        <tr>
+                                            <td>${new Date(s.date).toLocaleDateString()}</td>
+                                            <td>${s.agent}</td>
+                                            <td>${s.product}</td>
+                                            <td>${s.quantite}</td>
+                                            <td>${s.montant_total.toLocaleString()}€</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `}
+                </div>
+                
+                <div class="card">
+                    <h3>📊 Télécharger rapports PDF</h3>
+                    <button class="btn-pdf" onclick="downloadPDF('sales')">📄 Rapport Ventes PDF</button>
+                </div>
+            `;
+        }
+        
+        async function stockView() {
+            let products = [];
+            let stockData = [];
+            try { products = await apiCall('/api/products/'); } catch(e) {}
+            try { stockData = await apiCall('/api/stock/current'); } catch(e) {}
+            
+            return `
+                <div class="card">
+                    <h3>📦 Gestion des stocks</h3>
+                    ${products.length === 0 ? '<div class="empty">📭 Aucun produit</div>' : products.map(p => {
+                        const stock = stockData.find(s => s.product_id === p.id) || { quantite_disponible: 0 };
+                        return `
+                            <div class="product-item">
+                                <div><b>${p.nom}</b> - ${p.prix_unitaire}€</div>
+                                <div>📦 Stock actuel: <b>${stock.quantite_disponible}</b></div>
+                                <div class="flex">
+                                    <input type="number" id="entree_${p.id}" placeholder="Entrée" style="width:30%">
+                                    <input type="number" id="sortie_${p.id}" placeholder="Sortie" style="width:30%">
+                                    <button class="btn-small" onclick="updateStock(${p.id})">✓ Mettre à jour</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+        
+        async function updateStock(productId) {
+            const entree = document.getElementById(`entree_${productId}`).value || 0;
+            const sortie = document.getElementById(`sortie_${productId}`).value || 0;
+            try {
+                await apiCall(`/api/stock/movement?product_id=${productId}&quantite_entree=${entree}&quantite_sortie=${sortie}`, { method: 'POST' });
+                location.reload();
+            } catch(e) {
+                alert('Erreur: ' + e.message);
+            }
+        }
+        
+        async function commercialView() {
+            let products = [];
+            let revenue = { total_revenue: 0 };
+            let reports = [];
+            try { products = await apiCall('/api/products/'); } catch(e) {}
+            try { revenue = await apiCall('/api/sales/total-revenue'); } catch(e) {}
+            try { reports = await apiCall('/api/sales/my-reports'); } catch(e) {}
+            
+            return `
+                <div class="card">
+                    <h3>💰 Mon chiffre d'affaires</h3>
+                    <div class="stat-card"><p>${(revenue.total_revenue || 0).toLocaleString()}€</p></div>
+                </div>
+                
+                <div class="card">
+                    <h3>📝 Nouvelle vente</h3>
+                    <select id="productSelect">
+                        ${products.map(p => `<option value="${p.id}">${p.nom} - ${p.prix_unitaire}€</option>`).join('')}
+                    </select>
+                    <input type="number" id="saleQty" placeholder="Quantité">
+                    <button onclick="createSale()">💾 Enregistrer la vente</button>
+                    <div id="saleMsg"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>📋 Mes ventes</h3>
+                    ${reports.length === 0 ? '<div class="empty">📭 Aucune vente enregistrée</div>' : `
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th>Date</th><th>Produit</th><th>Quantité</th><th>Total</th></tr></thead>
+                                <tbody>
+                                    ${reports.map(r => `
+                                        <tr>
+                                            <td>${new Date(r.date).toLocaleDateString()}</td>
+                                            <td>${r.product}</td>
+                                            <td>${r.quantite}</td>
+                                            <td>${r.montant_total.toLocaleString()}€</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+        
+        async function createSale() {
+            const productId = document.getElementById('productSelect').value;
+            const qty = document.getElementById('saleQty').value;
+            if (!qty || qty <= 0) {
+                document.getElementById('saleMsg').innerHTML = '<div class="error">⚠️ Quantité valide requise</div>';
+                return;
+            }
+            try {
+                await apiCall(`/api/sales/report?product_id=${productId}&quantite=${qty}`, { method: 'POST' });
+                document.getElementById('saleMsg').innerHTML = '<div class="success">✅ Vente enregistrée</div>';
+                setTimeout(() => location.reload(), 1500);
+            } catch(e) {
+                document.getElementById('saleMsg').innerHTML = `<div class="error">❌ ${e.message}</div>`;
+            }
+        }
+        
+        async function createProduct() {
+            const nom = document.getElementById('newProduct')?.value;
+            const prix = document.getElementById('newPrice')?.value;
+            if (!nom || !prix) {
+                const msgDiv = document.getElementById('productMsgDC');
+                if (msgDiv) msgDiv.innerHTML = '<div class="error">⚠️ Nom et prix requis</div>';
+                return;
+            }
+            try {
+                await apiCall(`/api/products/create?nom=${encodeURIComponent(nom)}&prix_unitaire=${prix}`, { method: 'POST' });
+                const msgDiv = document.getElementById('productMsgDC');
+                if (msgDiv) msgDiv.innerHTML = '<div class="success">✅ Produit ajouté</div>';
+                setTimeout(() => location.reload(), 1500);
+            } catch(e) {
+                const msgDiv = document.getElementById('productMsgDC');
+                if (msgDiv) msgDiv.innerHTML = `<div class="error">❌ ${e.message}</div>`;
+            }
         }
         
         function downloadPDF(type) { window.open(API + `/api/reports/${type}?token=${token}`, '_blank'); }
         function logout() { localStorage.clear(); window.location.href = '/'; }
+        
+        // Load additional data for DG view after render
+        setTimeout(() => {
+            if (userRole === 'DG') {
+                loadProducts();
+                loadFinance();
+                loadPending();
+            }
+        }, 100);
         
         loadDashboard();
     </script>
