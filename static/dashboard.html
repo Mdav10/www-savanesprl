@@ -6,10 +6,10 @@
     <meta charset="UTF-8">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fb; padding-bottom: 80px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; padding-bottom: 80px; }
         .header { background: white; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .header h2 { font-size: 18px; color: #1a1a2e; }
-        .user-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
         .user-badge { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; }
         .logout-btn { background: #dc3545; color: white; border: none; padding: 6px 16px; border-radius: 20px; font-size: 12px; cursor: pointer; }
         .container { padding: 16px; max-width: 600px; margin: 0 auto; }
@@ -18,29 +18,26 @@
         .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         .stat-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px; border-radius: 12px; text-align: center; }
         .stat-card h4 { font-size: 11px; opacity: 0.9; margin-bottom: 4px; }
-        .stat-card p { font-size: 20px; font-weight: bold; }
-        input, select, textarea { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; }
+        .stat-card p { font-size: 18px; font-weight: bold; }
+        input, select { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; }
         button { background: #007bff; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 8px; }
-        button:active { transform: scale(0.98); }
-        .btn-small { width: auto; padding: 6px 12px; font-size: 12px; margin: 0; }
-        .btn-pdf { background: #dc3545; margin-top: 8px; }
-        .btn-approve { background: #28a745; }
-        .btn-reject { background: #dc3545; }
+        .btn-small { width: auto; padding: 8px 16px; display: inline-block; margin: 5px; }
+        .btn-pdf { background: #dc3545; }
         .btn-create { background: #28a745; }
+        .btn-approve { background: #28a745; margin: 5px; }
+        .btn-reject { background: #dc3545; margin: 5px; }
         .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 400px; }
-        th, td { padding: 10px 6px; text-align: left; border-bottom: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { padding: 8px 4px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #f8f9fa; }
-        .hidden { display: none; }
         .success { color: #28a745; background: #e6ffed; padding: 10px; border-radius: 8px; margin-top: 8px; font-size: 12px; }
         .error { color: #dc3545; background: #ffe5e5; padding: 10px; border-radius: 8px; margin-top: 8px; font-size: 12px; }
-        .info { color: #856404; background: #fff3cd; padding: 10px; border-radius: 8px; margin-top: 8px; font-size: 12px; }
-        .pending-card { background: #f8f9fa; border-radius: 12px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #ffc107; }
-        .product-item { background: #f8f9fa; padding: 10px; margin: 8px 0; border-radius: 10px; }
-        .flex { display: flex; gap: 8px; flex-wrap: wrap; }
-        .flex button { flex: 1; }
-        .loading { text-align: center; padding: 40px; color: #666; }
         .empty { text-align: center; padding: 20px; color: #999; font-style: italic; }
+        .pending-card { background: #f8f9fa; border-radius: 12px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #ffc107; }
+        .product-item { background: #f8f9fa; padding: 12px; margin: 8px 0; border-radius: 10px; }
+        .flex { display: flex; gap: 8px; flex-wrap: wrap; }
+        .flex button { flex: 1; margin: 0; }
+        .loading { text-align: center; padding: 40px; color: #666; }
     </style>
 </head>
 <body>
@@ -62,6 +59,7 @@
         if (!token) window.location.href = '/';
         
         const API = window.location.origin;
+        const CURRENCY = 'FBU';
         
         document.getElementById('userInfo').innerHTML = getRoleIcon() + ' ' + userRole;
         
@@ -77,7 +75,7 @@
             });
             if (!res.ok) {
                 const text = await res.text();
-                throw new Error(text || res.statusText);
+                throw new Error(text.substring(0, 100));
             }
             return res.json();
         }
@@ -92,7 +90,7 @@
                 else if (userRole === 'DIRECTEUR_COMMERCIAL') html = await dcView();
                 else if (userRole === 'AGENT_STOCK') html = await stockView();
                 else if (userRole === 'AGENT_COMMERCIAL') html = await commercialView();
-                else html = '<div class="card"><p>Rôle non reconnu</p></div>';
+                else html = '<div class="card">Rôle non reconnu</div>';
                 document.getElementById('app').innerHTML = html;
             } catch (err) {
                 document.getElementById('app').innerHTML = `<div class="card error">❌ Erreur: ${err.message}</div>`;
@@ -100,17 +98,23 @@
         }
         
         async function dgView() {
-            // Get existing users
             let users = [];
+            let products = [];
+            let finance = { total_entrees: 0, total_sorties: 0, solde: 0 };
+            let pending = [];
+            
             try { users = await apiCall('/api/users/'); } catch(e) { users = []; }
+            try { products = await apiCall('/api/products/'); } catch(e) { products = []; }
+            try { finance = await apiCall('/api/transactions/dashboard'); } catch(e) { finance = { total_entrees: 0, total_sorties: 0, solde: 0 }; }
+            try { pending = await apiCall('/api/transactions/pending'); } catch(e) { pending = []; }
             
             return `
                 <div class="card">
                     <h3>👥 Créer un utilisateur</h3>
-                    <input type="text" id="newNom" placeholder="Nom complet" required>
-                    <input type="email" id="newEmail" placeholder="Email" required>
-                    <input type="text" id="newUsername" placeholder="Nom d'utilisateur" required>
-                    <input type="password" id="newPassword" placeholder="Mot de passe" required>
+                    <input type="text" id="newNom" placeholder="Nom complet">
+                    <input type="email" id="newEmail" placeholder="Email">
+                    <input type="text" id="newUsername" placeholder="Nom d'utilisateur">
+                    <input type="password" id="newPassword" placeholder="Mot de passe">
                     <select id="newRole">
                         <option value="DT">🔧 Directeur Technique (DT)</option>
                         <option value="DAF">📊 Directeur Administratif (DAF)</option>
@@ -125,46 +129,58 @@
                 
                 <div class="card">
                     <h3>👥 Utilisateurs existants</h3>
-                    ${users.length === 0 ? '<div class="empty">📭 Aucun utilisateur créé</div>' : `
+                    ${users.filter(u => u.role !== 'DG').length === 0 ? '<div class="empty">📭 Aucun utilisateur créé</div>' : `
                         <div class="table-wrapper">
-                            <table>
-                                <thead><tr><th>Nom</th><th>Login</th><th>Rôle</th><th>Statut</th></tr></thead>
-                                <tbody>
-                                    ${users.filter(u => u.role !== 'DG').map(u => `
-                                        <tr>
-                                            <td>${u.nom}</td>
-                                            <td>${u.username}</td>
-                                            <td>${u.role}</td>
-                                            <td>${u.is_active ? '✅ Actif' : '❌ Inactif'}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
+                            <table><thead><tr><th>Nom</th><th>Login</th><th>Rôle</th><th>Statut</th></tr></thead>
+                            <tbody>${users.filter(u => u.role !== 'DG').map(u => `<tr><td>${u.nom}</td><td>${u.username}</td><td>${u.role}</td><td>${u.is_active ? '✅ Actif' : '❌ Inactif'}</td></tr>`).join('')}</tbody>
+                        </table>
                         </div>
                     `}
                 </div>
                 
                 <div class="card">
-                    <h3>📦 Gestion des produits</h3>
-                    <input type="text" id="productName" placeholder="Nom du produit">
-                    <input type="number" id="productPrice" placeholder="Prix unitaire (€)">
-                    <button onclick="createProduct()">➕ Ajouter un produit</button>
+                    <h3>📦 Produits</h3>
+                    <div class="flex">
+                        <input type="text" id="productName" placeholder="Nom du produit" style="flex:2">
+                        <input type="number" id="productPrice" placeholder="Prix (FBU)" style="flex:1">
+                        <button onclick="createProduct()" style="flex:1">➕ Ajouter</button>
+                    </div>
                     <div id="productMsg"></div>
-                    <div id="productList"></div>
+                    ${products.length === 0 ? '<div class="empty">📭 Aucun produit</div>' : `
+                        <div class="table-wrapper">
+                            <table><thead><tr><th>Produit</th><th>Prix</th></tr></thead>
+                            <tbody>${products.map(p => `<tr><td>${p.nom}</td><td>${p.prix_unitaire.toLocaleString()} ${CURRENCY}</td></tr>`).join('')}</tbody>
+                        </table>
+                        </div>
+                    `}
                 </div>
                 
                 <div class="card">
                     <h3>💰 Finances</h3>
-                    <div id="financeData" class="stats"></div>
+                    <div class="stats">
+                        <div class="stat-card"><h4>Entrées</h4><p>${(finance.total_entrees || 0).toLocaleString()} ${CURRENCY}</p></div>
+                        <div class="stat-card"><h4>Sorties</h4><p>${(finance.total_sorties || 0).toLocaleString()} ${CURRENCY}</p></div>
+                        <div class="stat-card"><h4>Solde</h4><p>${(finance.solde || 0).toLocaleString()} ${CURRENCY}</p></div>
+                    </div>
                 </div>
                 
                 <div class="card">
                     <h3>⏳ Validations en attente</h3>
-                    <div id="pendingList"></div>
+                    ${pending.length === 0 ? '<div class="empty">✅ Aucune validation en attente</div>' : pending.map(p => `
+                        <div class="pending-card">
+                            <strong>${p.libelle}</strong><br>
+                            💰 ${p.montant.toLocaleString()} ${CURRENCY}<br>
+                            📅 ${new Date(p.date).toLocaleDateString()}<br>
+                            <div class="flex">
+                                <button class="btn-approve" onclick="validateTx(${p.id}, 'APPROUVE')">✅ Approuver</button>
+                                <button class="btn-reject" onclick="validateTx(${p.id}, 'REJETE')">❌ Rejeter</button>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
                 
                 <div class="card">
-                    <h3>📊 Télécharger rapports PDF</h3>
+                    <h3>📊 Télécharger PDF</h3>
                     <button class="btn-pdf" onclick="downloadPDF('transactions')">📄 Transactions</button>
                     <button class="btn-pdf" onclick="downloadPDF('financial')">📄 Financier</button>
                     <button class="btn-pdf" onclick="downloadPDF('sales')">📄 Ventes</button>
@@ -190,16 +206,12 @@
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
+                const data = await res.json();
                 if (res.ok) {
                     document.getElementById('createMsg').innerHTML = '<div class="success">✅ Utilisateur créé avec succès</div>';
-                    document.getElementById('newNom').value = '';
-                    document.getElementById('newEmail').value = '';
-                    document.getElementById('newUsername').value = '';
-                    document.getElementById('newPassword').value = '';
                     setTimeout(() => location.reload(), 1500);
                 } else {
-                    const err = await res.json();
-                    document.getElementById('createMsg').innerHTML = `<div class="error">❌ ${err.detail}</div>`;
+                    document.getElementById('createMsg').innerHTML = `<div class="error">❌ ${data.detail || 'Erreur'}</div>`;
                 }
             } catch(e) {
                 document.getElementById('createMsg').innerHTML = `<div class="error">❌ Erreur: ${e.message}</div>`;
@@ -216,71 +228,10 @@
             try {
                 await apiCall(`/api/products/create?nom=${encodeURIComponent(nom)}&prix_unitaire=${prix}`, { method: 'POST' });
                 document.getElementById('productMsg').innerHTML = '<div class="success">✅ Produit ajouté</div>';
-                document.getElementById('productName').value = '';
-                document.getElementById('productPrice').value = '';
-                loadProducts();
+                setTimeout(() => location.reload(), 1500);
             } catch(e) {
                 document.getElementById('productMsg').innerHTML = `<div class="error">❌ ${e.message}</div>`;
             }
-        }
-        
-        async function loadProducts() {
-            try {
-                const products = await apiCall('/api/products/');
-                const container = document.getElementById('productList');
-                if (!container) return;
-                if (products.length === 0) {
-                    container.innerHTML = '<div class="empty">📭 Aucun produit</div>';
-                } else {
-                    container.innerHTML = `
-                        <div class="table-wrapper">
-                            <table>
-                                <thead><tr><th>Produit</th><th>Prix</th></tr></thead>
-                                <tbody>
-                                    ${products.map(p => `<tr><td>${p.nom}</td><td>${p.prix_unitaire}€</td></tr>`).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-                }
-            } catch(e) {}
-        }
-        
-        async function loadFinance() {
-            try {
-                const data = await apiCall('/api/transactions/dashboard');
-                const container = document.getElementById('financeData');
-                if (container) {
-                    container.innerHTML = `
-                        <div class="stat-card"><h4>💰 Entrées</h4><p>${(data.total_entrees || 0).toLocaleString()}€</p></div>
-                        <div class="stat-card"><h4>📤 Sorties</h4><p>${(data.total_sorties || 0).toLocaleString()}€</p></div>
-                        <div class="stat-card"><h4>💵 Solde</h4><p>${(data.solde || 0).toLocaleString()}€</p></div>
-                    `;
-                }
-            } catch(e) {}
-        }
-        
-        async function loadPending() {
-            try {
-                const pending = await apiCall('/api/transactions/pending');
-                const container = document.getElementById('pendingList');
-                if (!container) return;
-                if (pending.length === 0) {
-                    container.innerHTML = '<div class="empty">✅ Aucune validation en attente</div>';
-                } else {
-                    container.innerHTML = pending.map(p => `
-                        <div class="pending-card">
-                            <strong>${p.libelle}</strong><br>
-                            💰 ${p.montant.toLocaleString()}€<br>
-                            📅 ${new Date(p.date).toLocaleDateString()}<br>
-                            <div class="flex">
-                                <button class="btn-approve" onclick="validateTx(${p.id}, 'APPROUVE')">✅ Approuver</button>
-                                <button class="btn-reject" onclick="validateTx(${p.id}, 'REJETE')">❌ Rejeter</button>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-            } catch(e) {}
         }
         
         async function validateTx(id, action) {
@@ -293,16 +244,16 @@
         }
         
         async function comptableView() {
-            let data = { total_entrees: 0, total_sorties: 0, solde: 0, transactions: [] };
-            try { data = await apiCall('/api/transactions/dashboard'); } catch(e) {}
+            let finance = { total_entrees: 0, total_sorties: 0, solde: 0, transactions: [] };
+            try { finance = await apiCall('/api/transactions/dashboard'); } catch(e) {}
             
             return `
                 <div class="card">
                     <h3>💰 Finances</h3>
                     <div class="stats">
-                        <div class="stat-card"><h4>Entrées</h4><p>${(data.total_entrees || 0).toLocaleString()}€</p></div>
-                        <div class="stat-card"><h4>Sorties</h4><p>${(data.total_sorties || 0).toLocaleString()}€</p></div>
-                        <div class="stat-card"><h4>Solde</h4><p>${(data.solde || 0).toLocaleString()}€</p></div>
+                        <div class="stat-card"><h4>Entrées</h4><p>${(finance.total_entrees || 0).toLocaleString()} ${CURRENCY}</p></div>
+                        <div class="stat-card"><h4>Sorties</h4><p>${(finance.total_sorties || 0).toLocaleString()} ${CURRENCY}</p></div>
+                        <div class="stat-card"><h4>Solde</h4><p>${(finance.solde || 0).toLocaleString()} ${CURRENCY}</p></div>
                     </div>
                 </div>
                 
@@ -312,36 +263,25 @@
                         <option value="entree">📥 Entrée (Revenu)</option>
                         <option value="sortie">📤 Sortie (Dépense - besoin approbation)</option>
                     </select>
-                    <input type="number" id="txMontant" placeholder="Montant (€)">
+                    <input type="number" id="txMontant" placeholder="Montant (${CURRENCY})">
                     <input type="text" id="txLibelle" placeholder="Libellé">
                     <button onclick="createTransaction()">💾 Enregistrer</button>
                     <div id="txMsg"></div>
                 </div>
                 
                 <div class="card">
-                    <h3>📋 Historique des transactions</h3>
-                    ${data.transactions.length === 0 ? '<div class="empty">📭 Aucune transaction</div>' : `
+                    <h3>📋 Historique</h3>
+                    ${finance.transactions.length === 0 ? '<div class="empty">📭 Aucune transaction</div>' : `
                         <div class="table-wrapper">
-                            <table>
-                                <thead><tr><th>Date</th><th>Type</th><th>Montant</th><th>Libellé</th><th>Statut</th></tr></thead>
-                                <tbody>
-                                    ${data.transactions.slice(0,20).map(t => `
-                                        <tr>
-                                            <td>${new Date(t.date).toLocaleDateString()}</td>
-                                            <td>${t.type === 'entree' ? '📥' : '📤'}</td>
-                                            <td>${t.montant.toLocaleString()}€</td>
-                                            <td>${t.libelle}</td>
-                                            <td>${t.statut === 'APPROUVE' ? '✅' : (t.statut === 'EN_ATTENTE' ? '⏳' : '❌')}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
+                            <table><thead><tr><th>Date</th><th>Type</th><th>Montant</th><th>Statut</th></tr></thead>
+                            <tbody>${finance.transactions.slice(0,20).map(t => `<tr><td>${new Date(t.date).toLocaleDateString()}</td><td>${t.type === 'entree' ? '📥' : '📤'}</td><td>${t.montant.toLocaleString()} ${CURRENCY}</td><td>${t.statut === 'APPROUVE' ? '✅' : (t.statut === 'EN_ATTENTE' ? '⏳' : '❌')}</td></tr>`).join('')}</tbody>
+                        </table>
                         </div>
                     `}
                 </div>
                 
                 <div class="card">
-                    <h3>📊 Télécharger rapports PDF</h3>
+                    <h3>📊 Télécharger PDF</h3>
                     <button class="btn-pdf" onclick="downloadPDF('transactions')">📄 Transactions PDF</button>
                 </div>
             `;
@@ -365,27 +305,27 @@
         }
         
         async function dafView() {
-            let data = { total_entrees: 0, total_sorties: 0, solde: 0 };
+            let finance = { total_entrees: 0, total_sorties: 0, solde: 0 };
             let pending = [];
-            try { data = await apiCall('/api/transactions/dashboard'); } catch(e) {}
+            try { finance = await apiCall('/api/transactions/dashboard'); } catch(e) {}
             try { pending = await apiCall('/api/transactions/pending'); } catch(e) {}
             
             return `
                 <div class="card">
                     <h3>💰 Finances</h3>
                     <div class="stats">
-                        <div class="stat-card"><h4>Entrées</h4><p>${(data.total_entrees || 0).toLocaleString()}€</p></div>
-                        <div class="stat-card"><h4>Sorties</h4><p>${(data.total_sorties || 0).toLocaleString()}€</p></div>
-                        <div class="stat-card"><h4>Solde</h4><p>${(data.solde || 0).toLocaleString()}€</p></div>
+                        <div class="stat-card"><h4>Entrées</h4><p>${(finance.total_entrees || 0).toLocaleString()} ${CURRENCY}</p></div>
+                        <div class="stat-card"><h4>Sorties</h4><p>${(finance.total_sorties || 0).toLocaleString()} ${CURRENCY}</p></div>
+                        <div class="stat-card"><h4>Solde</h4><p>${(finance.solde || 0).toLocaleString()} ${CURRENCY}</p></div>
                     </div>
                 </div>
                 
                 <div class="card">
-                    <h3>⏳ Validations en attente</h3>
-                    ${pending.length === 0 ? '<div class="empty">✅ Aucune validation en attente</div>' : pending.map(p => `
+                    <h3>⏳ Validations</h3>
+                    ${pending.length === 0 ? '<div class="empty">✅ Aucune validation</div>' : pending.map(p => `
                         <div class="pending-card">
                             <strong>${p.libelle}</strong><br>
-                            💰 ${p.montant.toLocaleString()}€<br>
+                            💰 ${p.montant.toLocaleString()} ${CURRENCY}<br>
                             📅 ${new Date(p.date).toLocaleDateString()}<br>
                             <div class="flex">
                                 <button class="btn-approve" onclick="validateTx(${p.id}, 'APPROUVE')">✅ Approuver</button>
@@ -396,7 +336,7 @@
                 </div>
                 
                 <div class="card">
-                    <h3>📊 Télécharger rapports PDF</h3>
+                    <h3>📊 Télécharger PDF</h3>
                     <button class="btn-pdf" onclick="downloadPDF('financial')">📄 Rapport Financier PDF</button>
                 </div>
             `;
@@ -411,33 +351,22 @@
             return `
                 <div class="card">
                     <h3>📋 Produits</h3>
-                    ${products.length === 0 ? '<div class="empty">📭 Aucun produit</div>' : products.map(p => `<div class="product-item"><b>${p.nom}</b> - ${p.prix_unitaire}€</div>`).join('')}
+                    ${products.length === 0 ? '<div class="empty">📭 Aucun produit</div>' : products.map(p => `<div class="product-item"><b>${p.nom}</b> - ${p.prix_unitaire.toLocaleString()} ${CURRENCY}</div>`).join('')}
                 </div>
                 
                 <div class="card">
                     <h3>📦 Mouvements de stock</h3>
-                    ${stockReports.length === 0 ? '<div class="empty">📭 Aucun mouvement de stock</div>' : `
+                    ${stockReports.length === 0 ? '<div class="empty">📭 Aucun mouvement</div>' : `
                         <div class="table-wrapper">
-                            <table>
-                                <thead><tr><th>Date</th><th>Produit</th><th>Entrée</th><th>Sortie</th><th>Disponible</th></tr></thead>
-                                <tbody>
-                                    ${stockReports.map(r => `
-                                        <tr>
-                                            <td>${new Date(r.date).toLocaleDateString()}</td>
-                                            <td>${r.product}</td>
-                                            <td>${r.quantite_entree}</td>
-                                            <td>${r.quantite_sortie}</td>
-                                            <td>${r.quantite_disponible}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
+                            <table><thead><tr><th>Date</th><th>Produit</th><th>Entrée</th><th>Sortie</th><th>Disponible</th></tr></thead>
+                            <tbody>${stockReports.map(r => `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td>${r.product}</td><td>${r.quantite_entree}</td><td>${r.quantite_sortie}</td><td>${r.quantite_disponible}</td></tr>`).join('')}</tbody>
+                        </table>
                         </div>
                     `}
                 </div>
                 
                 <div class="card">
-                    <h3>📊 Télécharger rapports PDF</h3>
+                    <h3>📊 Télécharger PDF</h3>
                     <button class="btn-pdf" onclick="downloadPDF('stock')">📄 Rapport Stock PDF</button>
                 </div>
             `;
@@ -453,57 +382,59 @@
             
             return `
                 <div class="card">
-                    <h3>💰 Chiffre d'affaires total</h3>
-                    <div class="stat-card"><p>${(revenue.total_revenue || 0).toLocaleString()}€</p></div>
+                    <h3>💰 Chiffre d'affaires</h3>
+                    <div class="stat-card"><p>${(revenue.total_revenue || 0).toLocaleString()} ${CURRENCY}</p></div>
                 </div>
                 
                 <div class="card">
-                    <h3>📦 Gestion des produits</h3>
+                    <h3>📦 Produits</h3>
                     <div class="flex">
-                        <input type="text" id="newProduct" placeholder="Nom du produit" style="flex:2">
-                        <input type="number" id="newPrice" placeholder="Prix" style="flex:1">
-                        <button onclick="createProduct()" style="flex:1">➕ Ajouter</button>
+                        <input type="text" id="newProductDC" placeholder="Nom" style="flex:2">
+                        <input type="number" id="newPriceDC" placeholder="Prix" style="flex:1">
+                        <button onclick="createProductDC()" style="flex:1">➕ Ajouter</button>
                     </div>
                     <div id="productMsgDC"></div>
                     ${products.length === 0 ? '<div class="empty">📭 Aucun produit</div>' : `
                         <div class="table-wrapper">
-                            <table>
-                                <thead><tr><th>Produit</th><th>Prix</th></tr></thead>
-                                <tbody>
-                                    ${products.map(p => `<tr><td>${p.nom}</td><td>${p.prix_unitaire}€</td></tr>`).join('')}
-                                </tbody>
-                            </table>
+                            <table><thead><tr><th>Produit</th><th>Prix</th></tr></thead>
+                            <tbody>${products.map(p => `<tr><td>${p.nom}</td><td>${p.prix_unitaire.toLocaleString()} ${CURRENCY}</td></tr>`).join('')}</tbody>
+                        </table>
                         </div>
                     `}
                 </div>
                 
                 <div class="card">
-                    <h3>📋 Rapports des ventes</h3>
-                    ${sales.length === 0 ? '<div class="empty">📭 Aucune vente enregistrée</div>' : `
+                    <h3>📋 Ventes</h3>
+                    ${sales.length === 0 ? '<div class="empty">📭 Aucune vente</div>' : `
                         <div class="table-wrapper">
-                            <table>
-                                <thead><tr><th>Date</th><th>Agent</th><th>Produit</th><th>Quantité</th><th>Total</th></tr></thead>
-                                <tbody>
-                                    ${sales.map(s => `
-                                        <tr>
-                                            <td>${new Date(s.date).toLocaleDateString()}</td>
-                                            <td>${s.agent}</td>
-                                            <td>${s.product}</td>
-                                            <td>${s.quantite}</td>
-                                            <td>${s.montant_total.toLocaleString()}€</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
+                            <table><thead><tr><th>Date</th><th>Agent</th><th>Produit</th><th>Qté</th><th>Total</th></tr></thead>
+                            <tbody>${sales.map(s => `<tr><td>${new Date(s.date).toLocaleDateString()}</td><td>${s.agent}</td><td>${s.product}</td><td>${s.quantite}</td><td>${s.montant_total.toLocaleString()} ${CURRENCY}</td></tr>`).join('')}</tbody>
+                        </table>
                         </div>
                     `}
                 </div>
                 
                 <div class="card">
-                    <h3>📊 Télécharger rapports PDF</h3>
+                    <h3>📊 Télécharger PDF</h3>
                     <button class="btn-pdf" onclick="downloadPDF('sales')">📄 Rapport Ventes PDF</button>
                 </div>
             `;
+        }
+        
+        async function createProductDC() {
+            const nom = document.getElementById('newProductDC').value;
+            const prix = document.getElementById('newPriceDC').value;
+            if (!nom || !prix) {
+                document.getElementById('productMsgDC').innerHTML = '<div class="error">⚠️ Nom et prix requis</div>';
+                return;
+            }
+            try {
+                await apiCall(`/api/products/create?nom=${encodeURIComponent(nom)}&prix_unitaire=${prix}`, { method: 'POST' });
+                document.getElementById('productMsgDC').innerHTML = '<div class="success">✅ Produit ajouté</div>';
+                setTimeout(() => location.reload(), 1500);
+            } catch(e) {
+                document.getElementById('productMsgDC').innerHTML = `<div class="error">❌ ${e.message}</div>`;
+            }
         }
         
         async function stockView() {
@@ -519,8 +450,8 @@
                         const stock = stockData.find(s => s.product_id === p.id) || { quantite_disponible: 0 };
                         return `
                             <div class="product-item">
-                                <div><b>${p.nom}</b> - ${p.prix_unitaire}€</div>
-                                <div>📦 Stock actuel: <b>${stock.quantite_disponible}</b></div>
+                                <div><b>${p.nom}</b> - ${p.prix_unitaire.toLocaleString()} ${CURRENCY}</div>
+                                <div>📦 Stock: <b>${stock.quantite_disponible}</b></div>
                                 <div class="flex">
                                     <input type="number" id="entree_${p.id}" placeholder="Entrée" style="width:30%">
                                     <input type="number" id="sortie_${p.id}" placeholder="Sortie" style="width:30%">
@@ -554,37 +485,27 @@
             
             return `
                 <div class="card">
-                    <h3>💰 Mon chiffre d'affaires</h3>
-                    <div class="stat-card"><p>${(revenue.total_revenue || 0).toLocaleString()}€</p></div>
+                    <h3>💰 Mes ventes</h3>
+                    <div class="stat-card"><p>${(revenue.total_revenue || 0).toLocaleString()} ${CURRENCY}</p></div>
                 </div>
                 
                 <div class="card">
                     <h3>📝 Nouvelle vente</h3>
                     <select id="productSelect">
-                        ${products.map(p => `<option value="${p.id}">${p.nom} - ${p.prix_unitaire}€</option>`).join('')}
+                        ${products.map(p => `<option value="${p.id}">${p.nom} - ${p.prix_unitaire.toLocaleString()} ${CURRENCY}</option>`).join('')}
                     </select>
                     <input type="number" id="saleQty" placeholder="Quantité">
-                    <button onclick="createSale()">💾 Enregistrer la vente</button>
+                    <button onclick="createSale()">💾 Enregistrer</button>
                     <div id="saleMsg"></div>
                 </div>
                 
                 <div class="card">
                     <h3>📋 Mes ventes</h3>
-                    ${reports.length === 0 ? '<div class="empty">📭 Aucune vente enregistrée</div>' : `
+                    ${reports.length === 0 ? '<div class="empty">📭 Aucune vente</div>' : `
                         <div class="table-wrapper">
-                            <table>
-                                <thead><tr><th>Date</th><th>Produit</th><th>Quantité</th><th>Total</th></tr></thead>
-                                <tbody>
-                                    ${reports.map(r => `
-                                        <tr>
-                                            <td>${new Date(r.date).toLocaleDateString()}</td>
-                                            <td>${r.product}</td>
-                                            <td>${r.quantite}</td>
-                                            <td>${r.montant_total.toLocaleString()}€</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
+                            <table><thead><tr><th>Date</th><th>Produit</th><th>Quantité</th><th>Total</th></tr></thead>
+                            <tbody>${reports.map(r => `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td>${r.product}</td><td>${r.quantite}</td><td>${r.montant_total.toLocaleString()} ${CURRENCY}</td></tr>`).join('')}</tbody>
+                        </table>
                         </div>
                     `}
                 </div>
@@ -607,36 +528,8 @@
             }
         }
         
-        async function createProduct() {
-            const nom = document.getElementById('newProduct')?.value;
-            const prix = document.getElementById('newPrice')?.value;
-            if (!nom || !prix) {
-                const msgDiv = document.getElementById('productMsgDC');
-                if (msgDiv) msgDiv.innerHTML = '<div class="error">⚠️ Nom et prix requis</div>';
-                return;
-            }
-            try {
-                await apiCall(`/api/products/create?nom=${encodeURIComponent(nom)}&prix_unitaire=${prix}`, { method: 'POST' });
-                const msgDiv = document.getElementById('productMsgDC');
-                if (msgDiv) msgDiv.innerHTML = '<div class="success">✅ Produit ajouté</div>';
-                setTimeout(() => location.reload(), 1500);
-            } catch(e) {
-                const msgDiv = document.getElementById('productMsgDC');
-                if (msgDiv) msgDiv.innerHTML = `<div class="error">❌ ${e.message}</div>`;
-            }
-        }
-        
         function downloadPDF(type) { window.open(API + `/api/reports/${type}?token=${token}`, '_blank'); }
         function logout() { localStorage.clear(); window.location.href = '/'; }
-        
-        // Load additional data for DG view after render
-        setTimeout(() => {
-            if (userRole === 'DG') {
-                loadProducts();
-                loadFinance();
-                loadPending();
-            }
-        }, 100);
         
         loadDashboard();
     </script>
