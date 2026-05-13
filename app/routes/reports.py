@@ -1,16 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import mm
 from io import BytesIO
 from datetime import datetime
 from app.database import get_db
-from app.models import Transaction, Vente, User
+from app.models import Transaction, SaleReport, StockMovement, Product, User
 from app.auth import get_current_user, role_required
 
 router = APIRouter(prefix="/api/reports", tags=["Reports"])
@@ -21,17 +20,12 @@ def create_pdf_report(title, data, headers):
     styles = getSampleStyleSheet()
     elements = []
     
-    # Title
     title_style = ParagraphStyle('CustomTitle', parent=styles['Heading1'], fontSize=16, spaceAfter=30)
     elements.append(Paragraph(title, title_style))
     elements.append(Paragraph(f"Date: {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
     elements.append(Spacer(1, 20))
     
-    # Table
-    table_data = [headers]
-    for row in data:
-        table_data.append(row)
-    
+    table_data = [headers] + data
     table = Table(table_data)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
@@ -50,87 +44,49 @@ def create_pdf_report(title, data, headers):
     return buffer
 
 @router.get("/transactions")
-def download_transactions_report(
-    current_user = Depends(role_required(["DG", "DAF", "COMPTABLE"])),
+def download_transactions(
+    current_user = Depends(role_required(["COMPTABLE", "DG", "DAF"])),
     db: Session = Depends(get_db)
 ):
-    transactions = db.query(Transaction).order_by(Transaction.date.desc()).limit(500).all()
-    
-    data = []
-    for t in transactions:
-        data.append([
-            t.date.strftime('%d/%m/%Y'),
-            t.type.upper(),
-            f"{t.montant:,.0f} €",
-            t.libelle[:30],
-            t.statut
-        ])
-    
-    pdf_buffer = create_pdf_report(
-        "Rapport des Transactions",
-        data,
-        ["Date", "Type", "Montant", "Libellé", "Statut"]
-    )
-    
-    return Response(
-        content=pdf_buffer.getvalue(),
-        media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=transactions.pdf"}
-    )
+    transactions = db.query(Transaction).order_by(Transaction.date.desc()).all()
+    data = [[t.date.strftime('%d/%m/%Y'), t.type, f"{t.montant:,.0f}€", t.libelle[:40], t.statut] for t in transactions]
+    pdf = create_pdf_report("Rapport des Transactions", data, ["Date", "Type", "Montant", "Libellé", "Statut"])
+    return Response(content=pdf.getvalue(), media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=transactions.pdf"})
 
 @router.get("/financial")
-def download_financial_report(
+def download_financial(
     current_user = Depends(role_required(["DG", "DAF"])),
     db: Session = Depends(get_db)
 ):
     total_entrees = db.query(func.sum(Transaction.montant)).filter(Transaction.type == "entree").scalar() or 0
-    total_sorties = db.query(func.sum(Transaction.montant)).filter(
-        Transaction.type == "sortie",
-        Transaction.statut == "APPROUVE"
-    ).scalar() or 0
-    solde = total_entrees - total_sorties
-    
-    data = [
-        ["Total des Entrées", f"{total_entrees:,.0f} €"],
-        ["Total des Sorties (approuvées)", f"{total_sorties:,.0f} €"],
-        ["Solde Disponible", f"{solde:,.0f} €"],
-        ["", ""],
-        ["Rapport généré le", datetime.now().strftime('%d/%m/%Y %H:%M')]
-    ]
-    
-    pdf_buffer = create_pdf_report("Rapport Financier", data, ["Description", "Montant"])
-    
-    return Response(
-        content=pdf_buffer.getvalue(),
-        media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=financial_report.pdf"}
-    )
+    total_sorties = db.query(func.sum(Transaction.montant)).filter(Transaction.type == "sortie", Transaction.statut == "APPROUVE").scalar() or 0
+    data = [["Total Entrées", f"{total_entrees:,.0f}€"], ["Total Sorties", f"{total_sorties:,.0f}€"], ["Solde", f"{(total_entrees - total_sorties):,.0f}€"]]
+    pdf = create_pdf_report("Rapport Financier", data, ["Description", "Montant"])
+    return Response(content=pdf.getvalue(), media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=financial.pdf"})
 
 @router.get("/sales")
-def download_sales_report(
+def download_sales(
     current_user = Depends(role_required(["DG", "DIRECTEUR_COMMERCIAL"])),
     db: Session = Depends(get_db)
 ):
-    ventes = db.query(Vente).order_by(Vente.date.desc()).limit(500).all()
-    
+    sales = db.query(SaleReport).order_by(SaleReport.date.desc()).all()
     data = []
-    for v in ventes:
-        data.append([
-            v.date.strftime('%d/%m/%Y'),
-            v.produit,
-            str(v.quantite),
-            f"{v.prix_unitaire:,.0f} €",
-            f"{v.montant_total:,.0f} €"
-        ])
-    
-    pdf_buffer = create_pdf_report(
-        "Rapport des Ventes",
-        data,
-        ["Date", "Produit", "Quantité", "Prix Unitaire", "Total"]
-    )
-    
-    return Response(
-        content=pdf_buffer.getvalue(),
-        media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=sales_report.pdf"}
-    )
+    for s in sales:
+        product = db.query(Product).filter(Product.id == s.product_id).first()
+        agent = db.query(User).filter(User.id == s.agent_id).first()
+        data.append([s.date.strftime('%d/%m/%Y'), agent.nom if agent else "?", product.nom if product else "?", str(s.quantite), f"{s.montant_total:,.0f}€"])
+    pdf = create_pdf_report("Rapport des Ventes", data, ["Date", "Agent", "Produit", "Quantité", "Total"])
+    return Response(content=pdf.getvalue(), media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=sales.pdf"})
+
+@router.get("/stock")
+def download_stock(
+    current_user = Depends(role_required(["DG", "DT"])),
+    db: Session = Depends(get_db)
+):
+    movements = db.query(StockMovement).order_by(StockMovement.date.desc()).all()
+    data = []
+    for m in movements:
+        product = db.query(Product).filter(Product.id == m.product_id).first()
+        data.append([m.date.strftime('%d/%m/%Y'), product.nom if product else "?", str(m.quantite_entree), str(m.quantite_sortie), str(m.quantite_disponible)])
+    pdf = create_pdf_report("Rapport des Mouvements de Stock", data, ["Date", "Produit", "Entrée", "Sortie", "Disponible"])
+    return Response(content=pdf.getvalue(), media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=stock.pdf"})

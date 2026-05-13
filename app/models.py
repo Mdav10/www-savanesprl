@@ -6,9 +6,11 @@ import enum
 class RoleEnum(str, enum.Enum):
     DG = "DG"
     DAF = "DAF"
+    DT = "DT"
     DIRECTEUR_COMMERCIAL = "DIRECTEUR_COMMERCIAL"
     COMPTABLE = "COMPTABLE"
-    AGENT_MARKETING = "AGENT_MARKETING"
+    AGENT_STOCK = "AGENT_STOCK"
+    AGENT_COMMERCIAL = "AGENT_COMMERCIAL"
 
 class TransactionStatus(str, enum.Enum):
     EN_ATTENTE = "EN_ATTENTE"
@@ -31,6 +33,33 @@ class User(Base):
     session_token = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+class Product(Base):
+    __tablename__ = "products"
+    id = Column(Integer, primary_key=True, index=True)
+    nom = Column(String, nullable=False)
+    prix_unitaire = Column(Float, nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class StockMovement(Base):
+    __tablename__ = "stock_movements"
+    id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    quantite_entree = Column(Integer, default=0)
+    quantite_sortie = Column(Integer, default=0)
+    quantite_disponible = Column(Integer, default=0)
+    agent_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    date = Column(DateTime, default=datetime.utcnow)
+
+class SaleReport(Base):
+    __tablename__ = "sale_reports"
+    id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    quantite = Column(Integer, nullable=False)
+    montant_total = Column(Float, nullable=False)
+    agent_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    date = Column(DateTime, default=datetime.utcnow)
+
 class Transaction(Base):
     __tablename__ = "transactions"
     id = Column(Integer, primary_key=True, index=True)
@@ -38,27 +67,10 @@ class Transaction(Base):
     montant = Column(Float, nullable=False)
     libelle = Column(String, nullable=False)
     statut = Column(Enum(TransactionStatus), default=TransactionStatus.EN_ATTENTE)
+    raison_rejet = Column(String, nullable=True)
     valide_par = Column(Integer, ForeignKey("users.id"), nullable=True)
     cree_par = Column(Integer, ForeignKey("users.id"), nullable=False)
     date = Column(DateTime, default=datetime.utcnow)
-
-class Vente(Base):
-    __tablename__ = "ventes"
-    id = Column(Integer, primary_key=True, index=True)
-    produit = Column(String, nullable=False)
-    quantite = Column(Integer, nullable=False)
-    prix_unitaire = Column(Float, nullable=False)
-    montant_total = Column(Float, nullable=False)
-    agent_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    date = Column(DateTime, default=datetime.utcnow)
-
-class Stock(Base):
-    __tablename__ = "stock"
-    id = Column(Integer, primary_key=True, index=True)
-    produit = Column(String, unique=True, nullable=False)
-    quantite_entree = Column(Integer, default=0)
-    quantite_sortie = Column(Integer, default=0)
-    quantite_disponible = Column(Integer, default=0)
 
 class ActiviteLog(Base):
     __tablename__ = "activite_logs"

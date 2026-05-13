@@ -1,48 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SavaneSPRL - Dashboard</title>
+    <title>SavaneSPRL</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <meta charset="UTF-8">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f5f7fb; padding-bottom: 80px; }
-        .header { background: white; padding: 16px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-        .header h2 { font-size: 20px; color: #1a1a2e; }
-        .user-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .user-badge { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 16px; border-radius: 30px; font-size: 14px; font-weight: 500; }
-        .logout-btn { background: #dc3545; color: white; border: none; padding: 8px 20px; border-radius: 30px; font-size: 14px; font-weight: 600; cursor: pointer; }
-        .logout-btn:active { transform: scale(0.96); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fb; padding-bottom: 80px; }
+        .header { background: white; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .header h2 { font-size: 18px; color: #1a1a2e; }
+        .user-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .user-badge { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; }
+        .logout-btn { background: #dc3545; color: white; border: none; padding: 6px 16px; border-radius: 20px; font-size: 12px; cursor: pointer; }
         .container { padding: 16px; max-width: 600px; margin: 0 auto; }
-        .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .card h3 { font-size: 18px; color: #1a1a2e; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
-        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px; border-radius: 16px; text-align: center; }
-        .stat-card h4 { font-size: 13px; opacity: 0.9; margin-bottom: 8px; }
-        .stat-card p { font-size: 24px; font-weight: bold; }
-        input, select { width: 100%; padding: 14px; margin: 6px 0; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; background: #f8f9fa; }
-        input:focus, select:focus { outline: none; border-color: #667eea; background: white; }
-        button { background: #007bff; color: white; border: none; padding: 14px 20px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 8px; }
+        .card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .card h3 { font-size: 16px; margin-bottom: 12px; color: #333; display: flex; align-items: center; gap: 8px; }
+        .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .stat-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px; border-radius: 12px; text-align: center; }
+        .stat-card h4 { font-size: 11px; opacity: 0.9; margin-bottom: 4px; }
+        .stat-card p { font-size: 20px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; font-family: inherit; }
+        button { background: #007bff; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 8px; }
         button:active { transform: scale(0.98); }
-        .btn-small { padding: 8px 12px; font-size: 13px; width: auto; margin: 0; }
-        .btn-pdf { background: #dc3545; margin-top: 10px; }
-        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 500px; }
-        th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f8f9fa; font-weight: 600; color: #555; }
-        .status-active { color: #28a745; font-weight: 600; }
-        .status-inactive { color: #dc3545; }
+        .btn-small { width: auto; padding: 6px 12px; font-size: 12px; margin: 0; }
+        .btn-pdf { background: #dc3545; margin-top: 8px; }
+        .btn-approve { background: #28a745; }
+        .btn-reject { background: #dc3545; }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 400px; }
+        th, td { padding: 10px 6px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; }
         .hidden { display: none; }
-        .success { color: #28a745; background: #e6ffed; padding: 10px; border-radius: 10px; margin-top: 10px; font-size: 13px; }
-        .error { color: #dc3545; background: #ffe5e5; padding: 10px; border-radius: 10px; margin-top: 10px; font-size: 13px; }
+        .success { color: #28a745; background: #e6ffed; padding: 10px; border-radius: 8px; margin-top: 8px; font-size: 12px; }
+        .error { color: #dc3545; background: #ffe5e5; padding: 10px; border-radius: 8px; margin-top: 8px; font-size: 12px; }
         .pending-card { background: #f8f9fa; border-radius: 12px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #ffc107; }
-        .pending-buttons { display: flex; gap: 10px; margin-top: 10px; }
-        .pending-buttons button { flex: 1; margin: 0; }
-        .approve-btn { background: #28a745; }
-        .reject-btn { background: #dc3545; }
-        .nav-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; }
-        .nav-tab { background: white; color: #666; padding: 10px 16px; border-radius: 30px; font-size: 14px; white-space: nowrap; width: auto; margin: 0; }
-        .nav-tab.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .product-item { background: #f8f9fa; padding: 10px; margin: 8px 0; border-radius: 10px; }
+        .product-name { font-weight: bold; font-size: 14px; }
+        .product-price { color: #28a745; font-size: 13px; }
+        .flex { display: flex; gap: 8px; flex-wrap: wrap; }
+        .flex button { flex: 1; }
+        .date-input { display: flex; gap: 8px; }
+        .date-input input { flex: 1; }
     </style>
 </head>
 <body>
@@ -53,116 +51,8 @@
             <button class="logout-btn" onclick="logout()">🚪 Déconnexion</button>
         </div>
     </div>
-
-    <div class="container">
-        <!-- PDF Download Buttons for DG/DAF -->
-        <div id="pdfButtons" class="hidden card">
-            <h3>📄 Télécharger Rapports PDF</h3>
-            <button class="btn-pdf" onclick="downloadPDF('transactions')">📊 Télécharger Transactions</button>
-            <button class="btn-pdf" onclick="downloadPDF('financial')">💰 Télécharger Rapport Financier</button>
-            <button class="btn-pdf" onclick="downloadPDF('sales')">📦 Télécharger Ventes</button>
-        </div>
-
-        <div class="nav-tabs" id="navTabs"></div>
-
-        <!-- DG Section -->
-        <div id="dgSection" class="hidden">
-            <div class="card">
-                <h3>📊 Tableau de Bord DG</h3>
-                <div class="stats" id="dgStats"></div>
-            </div>
-            
-            <div class="card">
-                <h3>➕ Créer un utilisateur</h3>
-                <input type="text" id="newNom" placeholder="Nom complet">
-                <input type="email" id="newEmail" placeholder="Email">
-                <input type="text" id="newUsername" placeholder="Nom utilisateur">
-                <input type="password" id="newPassword" placeholder="Mot de passe">
-                <select id="newRole">
-                    <option value="DAF">📊 DAF</option>
-                    <option value="DIRECTEUR_COMMERCIAL">🛒 Directeur Commercial</option>
-                    <option value="COMPTABLE">💰 Comptable</option>
-                    <option value="AGENT_MARKETING">📦 Agent Marketing</option>
-                </select>
-                <button onclick="createUser()">✅ Créer l'utilisateur</button>
-                <div id="createMsg"></div>
-            </div>
-
-            <div class="card">
-                <h3>👥 Utilisateurs</h3>
-                <div class="table-wrapper">
-                    <table id="usersTable">
-                        <thead><tr><th>Nom</th><th>Rôle</th><th>Statut</th><th>Action</th></tr></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- DAF Section -->
-        <div id="dafSection" class="hidden">
-            <div class="card">
-                <h3>📊 Tableau de Bord DAF</h3>
-                <div class="stats" id="dafStats"></div>
-            </div>
-            <div class="card">
-                <h3>⏳ Validations en attente</h3>
-                <div id="pendingList"></div>
-            </div>
-            <div class="card">
-                <h3>📋 Dernières transactions</h3>
-                <div class="table-wrapper">
-                    <div id="dafTransactions"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Commercial Section -->
-        <div id="commercialSection" class="hidden">
-            <div class="card">
-                <h3>📈 Performance Commerciale</h3>
-                <div id="commercialData"></div>
-            </div>
-        </div>
-
-        <!-- Comptable Section -->
-        <div id="comptableSection" class="hidden">
-            <div class="card">
-                <h3>💰 Nouvelle transaction</h3>
-                <select id="txType">
-                    <option value="entree">📥 Entrée (Revenu) - Approuvé immédiatement</option>
-                    <option value="sortie">📤 Sortie (Dépense) - Attend approbation DG/DAF</option>
-                </select>
-                <input type="number" id="txMontant" placeholder="Montant (€)">
-                <input type="text" id="txLibelle" placeholder="Libellé">
-                <button onclick="createTransaction()">💾 Enregistrer</button>
-                <div id="txMsg"></div>
-            </div>
-            <div class="card">
-                <h3>📋 Historique des transactions</h3>
-                <div class="table-wrapper">
-                    <div id="txList"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Agent Section -->
-        <div id="agentSection" class="hidden">
-            <div class="card">
-                <h3>📝 Enregistrer une vente</h3>
-                <input type="text" id="venteProduit" placeholder="Nom du produit">
-                <input type="number" id="venteQuantite" placeholder="Quantité">
-                <input type="number" id="ventePrix" placeholder="Prix unitaire (€)">
-                <button onclick="createVente()">💾 Enregistrer la vente</button>
-                <div id="venteMsg"></div>
-            </div>
-            <div class="card">
-                <h3>📋 Mes ventes</h3>
-                <div class="table-wrapper">
-                    <div id="mesVentes"></div>
-                </div>
-            </div>
-        </div>
+    <div class="container" id="app">
+        <div id="dynamicContent">Chargement...</div>
     </div>
 
     <script>
@@ -173,204 +63,213 @@
         
         const API = window.location.origin;
         
-        function downloadPDF(type) {
-            window.open(API + `/api/reports/${type}?token=${token}`, '_blank');
-        }
-        
         async function loadDashboard() {
-            document.getElementById('userInfo').innerHTML = getUserIcon() + ' ' + userRole;
+            document.getElementById('userInfo').innerHTML = getRoleIcon() + ' ' + userRole;
             
-            // Show PDF buttons for DG and DAF
-            if (userRole === 'DG' || userRole === 'DAF' || userRole === 'DIRECTEUR_COMMERCIAL') {
-                document.getElementById('pdfButtons').classList.remove('hidden');
-            }
+            let html = '';
             
-            if (userRole === 'DG') {
-                document.getElementById('dgSection').classList.remove('hidden');
-                loadDGData();
-                loadUsers();
-            } else if (userRole === 'DAF') {
-                document.getElementById('dafSection').classList.remove('hidden');
-                loadDAFData();
-            } else if (userRole === 'DIRECTEUR_COMMERCIAL') {
-                document.getElementById('commercialSection').classList.remove('hidden');
-                loadCommercialData();
+            if (userRole === 'AGENT_STOCK') {
+                html = await getStockAgentView();
+            } else if (userRole === 'AGENT_COMMERCIAL') {
+                html = await getCommercialAgentView();
             } else if (userRole === 'COMPTABLE') {
-                document.getElementById('comptableSection').classList.remove('hidden');
-                loadTransactions();
-            } else if (userRole === 'AGENT_MARKETING') {
-                document.getElementById('agentSection').classList.remove('hidden');
-                loadMyVentes();
+                html = await getComptableView();
+            } else if (userRole === 'DT') {
+                html = await getDTView();
+            } else if (userRole === 'DAF') {
+                html = await getDAFView();
+            } else if (userRole === 'DIRECTEUR_COMMERCIAL') {
+                html = await getDCView();
+            } else if (userRole === 'DG') {
+                html = await getDGView();
             }
+            
+            document.getElementById('dynamicContent').innerHTML = html;
         }
         
-        function getUserIcon() {
-            const icons = { 'DG': '👑', 'DAF': '📊', 'DIRECTEUR_COMMERCIAL': '🛒', 'COMPTABLE': '💰', 'AGENT_MARKETING': '📦' };
+        function getRoleIcon() {
+            const icons = {
+                'DG': '👑', 'DAF': '📊', 'DT': '🔧', 'DIRECTEUR_COMMERCIAL': '🛒',
+                'COMPTABLE': '💰', 'AGENT_STOCK': '📦', 'AGENT_COMMERCIAL': '📈'
+            };
             return icons[userRole] || '👤';
         }
         
-        async function loadDGData() {
-            const res = await fetch(API + '/api/transactions/dashboard/dg-daf', {
+        async function getProducts() {
+            const res = await fetch(API + '/api/products/', {
                 headers: { 'Authorization': 'Bearer ' + token }
             });
-            const d = await res.json();
-            document.getElementById('dgStats').innerHTML = `
-                <div class="stat-card"><h4>💰 Entrées</h4><p>${(d.total_entrees || 0).toLocaleString()}€</p></div>
-                <div class="stat-card"><h4>📤 Sorties validées</h4><p>${(d.total_sorties_validees || 0).toLocaleString()}€</p></div>
-                <div class="stat-card"><h4>⏳ Sorties en attente</h4><p>${(d.total_sorties_attente || 0).toLocaleString()}€</p></div>
-                <div class="stat-card"><h4>💵 Solde</h4><p>${(d.montant_disponible || 0).toLocaleString()}€</p></div>
-            `;
+            return await res.json();
+        }
+        
+        function downloadPDF(endpoint, params = '') {
+            window.open(API + `/api/reports/${endpoint}?token=${token}${params}`, '_blank');
+        }
+        
+        async function getStockAgentView() {
+            const products = await getProducts();
+            let html = `<div class="card"><h3>📋 Produits</h3>`;
             
-            // Show transactions in DG view too
-            if (d.transactions && d.transactions.length > 0) {
-                let txHtml = '<div class="table-wrapper"><table><thead><tr><th>Date</th><th>Type</th><th>Montant</th><th>Libellé</th><th>Statut</th></tr></thead><tbody>';
-                for (const tx of d.transactions.slice(0, 20)) {
-                    const statusIcon = tx.statut === 'APPROUVE' ? '✅' : (tx.statut === 'EN_ATTENTE' ? '⏳' : '❌');
-                    txHtml += `<tr><td>${new Date(tx.date).toLocaleDateString()}</td><td>${tx.type === 'entree' ? '📥' : '📤'}</td><td>${tx.montant.toLocaleString()}€</td><td>${tx.libelle}</td><td>${statusIcon} ${tx.statut}</td></tr>`;
-                }
-                txHtml += '</tbody></table></div>';
+            for (const p of products) {
+                const stockRes = await fetch(API + `/api/stock/current`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const stockData = await stockRes.json();
+                const currentStock = stockData.find(s => s.product_id === p.id) || { quantite_disponible: 0 };
                 
-                // Add transaction card if not exists
-                if (!document.getElementById('dgTransactions')) {
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.id = 'dgTransactions';
-                    card.innerHTML = '<h3>📋 Dernières transactions</h3>' + txHtml;
-                    document.getElementById('dgSection').appendChild(card);
-                } else {
-                    document.getElementById('dgTransactions').innerHTML = '<h3>📋 Dernières transactions</h3>' + txHtml;
-                }
-            }
-        }
-        
-        async function loadUsers() {
-            const res = await fetch(API + '/api/users/', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            const users = await res.json();
-            let html = '';
-            for (const u of users) {
-                if (u.role !== 'DG') {
-                    html += `<tr>
-                        <td>${u.nom}</td>
-                        <td>${u.role.replace('_', ' ')}</td>
-                        <td class="${u.is_active ? 'status-active' : 'status-inactive'}">${u.is_active ? '✅ Actif' : '❌ Inactif'}</td>
-                        <td>${u.is_active ? `<button class="btn-small" onclick="disableUser(${u.id})">🔒 Désactiver</button>` : `<button class="btn-small" onclick="enableUser(${u.id})">🔓 Activer</button>`}</td>
-                    </tr>`;
-                }
-            }
-            document.querySelector('#usersTable tbody').innerHTML = html;
-        }
-        
-        async function createUser() {
-            const nom = document.getElementById('newNom').value;
-            const email = document.getElementById('newEmail').value;
-            const username = document.getElementById('newUsername').value;
-            const password = document.getElementById('newPassword').value;
-            const role = document.getElementById('newRole').value;
-            
-            if (!nom || !email || !username || !password) {
-                document.getElementById('createMsg').innerHTML = '<div class="error">⚠️ Tous les champs sont requis</div>';
-                return;
-            }
-            
-            const res = await fetch(API + `/api/users/create?nom=${encodeURIComponent(nom)}&email=${email}&username=${username}&mot_de_passe=${password}&role=${role}`, {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            if (res.ok) {
-                document.getElementById('createMsg').innerHTML = '<div class="success">✅ Utilisateur créé avec succès</div>';
-                document.getElementById('newNom').value = '';
-                document.getElementById('newEmail').value = '';
-                document.getElementById('newUsername').value = '';
-                document.getElementById('newPassword').value = '';
-                loadUsers();
-                setTimeout(() => document.getElementById('createMsg').innerHTML = '', 3000);
-            } else {
-                document.getElementById('createMsg').innerHTML = '<div class="error">❌ Erreur lors de la création</div>';
-            }
-        }
-        
-        async function disableUser(id) { await fetch(API + `/api/users/disable/${id}`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); loadUsers(); }
-        async function enableUser(id) { await fetch(API + `/api/users/enable/${id}`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); loadUsers(); }
-        
-        async function loadDAFData() {
-            const res = await fetch(API + '/api/transactions/dashboard/dg-daf', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            const d = await res.json();
-            document.getElementById('dafStats').innerHTML = `
-                <div class="stat-card"><h4>💰 Entrées</h4><p>${(d.total_entrees || 0).toLocaleString()}€</p></div>
-                <div class="stat-card"><h4>📤 Sorties validées</h4><p>${(d.total_sorties_validees || 0).toLocaleString()}€</p></div>
-                <div class="stat-card"><h4>💵 Solde</h4><p>${(d.montant_disponible || 0).toLocaleString()}€</p></div>
-            `;
-            
-            // Pending validations
-            const pRes = await fetch(API + '/api/transactions/pending', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            const pending = await pRes.json();
-            let html = '';
-            for (const p of pending) {
-                html += `<div class="pending-card">
-                    <strong>📝 ${p.libelle}</strong><br>
-                    💰 Montant: ${p.montant.toLocaleString()}€<br>
-                    📅 ${new Date(p.date).toLocaleDateString()}<br>
-                    <div class="pending-buttons">
-                        <button class="approve-btn" onclick="validateTx(${p.id}, 'APPROUVE')">✅ Approuver</button>
-                        <button class="reject-btn" onclick="validateTx(${p.id}, 'REJETE')">❌ Rejeter</button>
+                html += `
+                    <div class="product-item">
+                        <div class="product-name">${p.nom}</div>
+                        <div class="product-price">💰 ${p.prix_unitaire}€</div>
+                        <div>📦 Stock actuel: ${currentStock.quantite_disponible}</div>
+                        <div class="flex" style="margin-top: 8px;">
+                            <input type="number" id="entree_${p.id}" placeholder="Entrée" style="width: 30%;">
+                            <input type="number" id="sortie_${p.id}" placeholder="Sortie" style="width: 30%;">
+                            <button class="btn-small" onclick="updateStock(${p.id})">✓</button>
+                        </div>
                     </div>
-                </div>`;
+                `;
             }
-            document.getElementById('pendingList').innerHTML = html || '<p style="color:#888;">✅ Aucune validation en attente</p>';
-            
-            // Transactions list
-            let txHtml = '<div class="table-wrapper"><td><thead><tr><th>Date</th><th>Type</th><th>Montant</th><th>Libellé</th><th>Statut</th></tr></thead><tbody>';
-            for (const tx of d.transactions.slice(0, 20)) {
-                const statusIcon = tx.statut === 'APPROUVE' ? '✅' : (tx.statut === 'EN_ATTENTE' ? '⏳' : '❌');
-                txHtml += `<tr>
-                    <td>${new Date(tx.date).toLocaleDateString()}</td>
-                    <td>${tx.type === 'entree' ? '📥' : '📤'}</td>
-                    <td>${tx.montant.toLocaleString()}€</td>
-                    <td>${tx.libelle}</td>
-                    <td>${statusIcon} ${tx.statut}</td>
-                </tr>`;
-            }
-            txHtml += '</tbody></table></div>';
-            document.getElementById('dafTransactions').innerHTML = txHtml;
+            html += `</div>`;
+            return html;
         }
         
-        async function validateTx(id, action) {
-            await fetch(API + `/api/transactions/validate/${id}?action=${action}`, {
+        async function updateStock(productId) {
+            const entree = document.getElementById(`entree_${productId}`).value || 0;
+            const sortie = document.getElementById(`sortie_${productId}`).value || 0;
+            
+            await fetch(API + `/api/stock/movement?product_id=${productId}&quantite_entree=${entree}&quantite_sortie=${sortie}`, {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + token }
             });
-            loadDAFData();
+            location.reload();
         }
         
-        async function loadCommercialData() {
-            const res = await fetch(API + '/api/ventes/commercial/dashboard', {
+        async function getCommercialAgentView() {
+            const products = await getProducts();
+            const revenueRes = await fetch(API + '/api/sales/total-revenue', {
                 headers: { 'Authorization': 'Bearer ' + token }
             });
-            const d = await res.json();
-            let html = `<div class="stats"><div class="stat-card"><h4>📦 Quantité vendue</h4><p>${d.quantite_vendue_totale || 0}</p></div></div>`;
-            html += '<div class="table-wrapper"><tr><thead><tr><th>Agent</th><th>Quantité</th><th>Montant</th></tr></thead><tbody>';
-            for (const a of d.performance_agents || []) {
-                html += `<tr><td>${a.agent}</td><td>${a.quantite}</td><td>${a.montant.toLocaleString()}€</td></tr>`;
+            const revenue = await revenueRes.json();
+            
+            const myReportsRes = await fetch(API + '/api/sales/my-reports', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const myReports = await myReportsRes.json();
+            
+            let html = `
+                <div class="card">
+                    <h3>💰 Chiffre d'affaires total</h3>
+                    <div class="stats">
+                        <div class="stat-card"><h4>Total ventes</h4><p>${(revenue.total_revenue || 0).toLocaleString()}€</p></div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>📝 Nouvelle vente</h3>
+                    <select id="productSelect">
+                        ${products.map(p => `<option value="${p.id}">${p.nom} - ${p.prix_unitaire}€</option>`).join('')}
+                    </select>
+                    <input type="number" id="saleQuantity" placeholder="Quantité">
+                    <button onclick="createSale()">💾 Enregistrer la vente</button>
+                    <div id="saleMsg"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>📋 Mes rapports de vente</h3>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead><tr><th>Date</th><th>Produit</th><th>Quantité</th><th>Total</th></tr></thead>
+                            <tbody>
+                                ${myReports.map(r => `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td>${r.product}</td><td>${r.quantite}</td><td>${r.montant_total.toLocaleString()}€</td></tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            return html;
+        }
+        
+        async function createSale() {
+            const productId = document.getElementById('productSelect').value;
+            const quantite = document.getElementById('saleQuantity').value;
+            
+            const res = await fetch(API + `/api/sales/report?product_id=${productId}&quantite=${quantite}`, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            
+            if (res.ok) {
+                document.getElementById('saleMsg').innerHTML = '<div class="success">✅ Vente enregistrée</div>';
+                setTimeout(() => location.reload(), 1500);
             }
-            html += '</tbody></table></div>';
-            document.getElementById('commercialData').innerHTML = html;
+        }
+        
+        async function getComptableView() {
+            const dashboardRes = await fetch(API + '/api/transactions/dashboard', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const data = await dashboardRes.json();
+            
+            let html = `
+                <div class="card">
+                    <h3>💰 Finances</h3>
+                    <div class="stats">
+                        <div class="stat-card"><h4>Entrées</h4><p>${(data.total_entrees || 0).toLocaleString()}€</p></div>
+                        <div class="stat-card"><h4>Sorties</h4><p>${(data.total_sorties || 0).toLocaleString()}€</p></div>
+                        <div class="stat-card"><h4>Solde</h4><p>${(data.solde || 0).toLocaleString()}€</p></div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>📝 Nouvelle transaction</h3>
+                    <select id="txType">
+                        <option value="entree">📥 Entrée (Revenu)</option>
+                        <option value="sortie">📤 Sortie (Dépense) - Nécessite approbation</option>
+                    </select>
+                    <input type="number" id="txMontant" placeholder="Montant (€)">
+                    <input type="text" id="txLibelle" placeholder="Libellé">
+                    <button onclick="createTransaction()">💾 Enregistrer</button>
+                    <div id="txMsg"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>📊 Télécharger rapports</h3>
+                    <div class="date-input">
+                        <input type="date" id="startDate">
+                        <input type="date" id="endDate">
+                    </div>
+                    <button class="btn-pdf" onclick="downloadPDF('transactions-by-date', ` + '`?start_date=${document.getElementById('startDate').value}&end_date=${document.getElementById('endDate').value}`' + `)">📄 PDF par date</button>
+                    <button class="btn-pdf" onclick="downloadPDF('transactions')">📄 PDF complet</button>
+                </div>
+                
+                <div class="card">
+                    <h3>📋 Historique</h3>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead><tr><th>Date</th><th>Type</th><th>Montant</th><th>Libellé</th><th>Statut</th></tr></thead>
+                            <tbody>
+                                ${data.transactions.slice(0, 20).map(t => `
+                                    <tr>
+                                        <td>${new Date(t.date).toLocaleDateString()}</td>
+                                        <td>${t.type === 'entree' ? '📥' : '📤'}</td>
+                                        <td>${t.montant.toLocaleString()}€</td>
+                                        <td>${t.libelle}</td>
+                                        <td>${t.statut === 'APPROUVE' ? '✅' : (t.statut === 'EN_ATTENTE' ? '⏳' : '❌')} ${t.statut}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            return html;
         }
         
         async function createTransaction() {
             const type = document.getElementById('txType').value;
             const montant = document.getElementById('txMontant').value;
             const libelle = document.getElementById('txLibelle').value;
-            
-            if (!montant || !libelle) {
-                document.getElementById('txMsg').innerHTML = '<div class="error">⚠️ Remplissez tous les champs</div>';
-                return;
-            }
             
             const res = await fetch(API + `/api/transactions/create?type=${type}&montant=${montant}&libelle=${encodeURIComponent(libelle)}`, {
                 method: 'POST',
@@ -380,82 +279,250 @@
             
             if (res.ok) {
                 document.getElementById('txMsg').innerHTML = `<div class="success">${data.message}</div>`;
-                document.getElementById('txMontant').value = '';
-                document.getElementById('txLibelle').value = '';
-                loadTransactions();
-                setTimeout(() => document.getElementById('txMsg').innerHTML = '', 3000);
-            } else {
-                document.getElementById('txMsg').innerHTML = '<div class="error">❌ Erreur</div>';
+                setTimeout(() => location.reload(), 1500);
             }
         }
         
-        async function loadTransactions() {
-            const res = await fetch(API + '/api/transactions/journal', {
+        async function getDTView() {
+            const products = await getProducts();
+            const stockReportsRes = await fetch(API + '/api/stock/reports/all', {
                 headers: { 'Authorization': 'Bearer ' + token }
             });
-            const txs = await res.json();
-            let html = '<div class="table-wrapper"><table><thead><tr><th>Date</th><th>Type</th><th>Montant</th><th>Libellé</th><th>Statut</th></tr></thead><tbody>';
-            for (const tx of txs.slice(0, 20)) {
-                const statusIcon = tx.statut === 'APPROUVE' ? '✅' : (tx.statut === 'EN_ATTENTE' ? '⏳' : '❌');
-                html += `<tr>
-                    <td>${new Date(tx.date).toLocaleDateString()}</td>
-                    <td>${tx.type === 'entree' ? '📥' : '📤'}</td>
-                    <td>${tx.montant.toLocaleString()}€</td>
-                    <td>${tx.libelle}</td>
-                    <td>${statusIcon} ${tx.statut}</td>
-                </tr>`;
+            const stockReports = await stockReportsRes.json();
+            
+            let html = `<div class="card"><h3>📋 Produits</h3>`;
+            for (const p of products) {
+                html += `<div class="product-item"><div class="product-name">${p.nom}</div><div class="product-price">💰 ${p.prix_unitaire}€</div></div>`;
             }
-            html += '</tbody></table></div>';
-            document.getElementById('txList').innerHTML = html;
+            html += `</div>
+                <div class="card"><h3>📦 Rapports de stock</h3>
+                <button class="btn-pdf" onclick="downloadPDF('stock')">📄 Télécharger PDF</button>
+                <div class="table-wrapper"><table><thead><tr><th>Date</th><th>Produit</th><th>Entrée</th><th>Sortie</th><th>Disponible</th></tr></thead><tbody>`;
+            for (const r of stockReports) {
+                html += `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td>${r.product}</td><td>${r.quantite_entree}</td><td>${r.quantite_sortie}</td><td>${r.quantite_disponible}</td></tr>`;
+            }
+            html += `</tbody></table></div></div>`;
+            return html;
         }
         
-        async function createVente() {
-            const produit = document.getElementById('venteProduit').value;
-            const quantite = document.getElementById('venteQuantite').value;
-            const prix = document.getElementById('ventePrix').value;
+        async function getDAFView() {
+            const financeRes = await fetch(API + '/api/transactions/dashboard', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const finance = await financeRes.json();
             
-            if (!produit || !quantite || !prix) {
-                document.getElementById('venteMsg').innerHTML = '<div class="error">⚠️ Tous les champs sont requis</div>';
-                return;
+            const pendingRes = await fetch(API + '/api/transactions/pending', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const pending = await pendingRes.json();
+            
+            let html = `
+                <div class="card">
+                    <h3>💰 Finances</h3>
+                    <div class="stats">
+                        <div class="stat-card"><h4>Entrées</h4><p>${(finance.total_entrees || 0).toLocaleString()}€</p></div>
+                        <div class="stat-card"><h4>Sorties</h4><p>${(finance.total_sorties || 0).toLocaleString()}€</p></div>
+                        <div class="stat-card"><h4>Solde</h4><p>${(finance.solde || 0).toLocaleString()}€</p></div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>⏳ Validations en attente</h3>
+                    ${pending.map(p => `
+                        <div class="pending-card">
+                            <strong>${p.libelle}</strong><br>
+                            💰 ${p.montant.toLocaleString()}€<br>
+                            📅 ${new Date(p.date).toLocaleDateString()}<br>
+                            <div class="flex">
+                                <button class="btn-approve" onclick="validateTx(${p.id}, 'APPROUVE')">✅ Approuver</button>
+                                <button class="btn-reject" onclick="showRejectReason(${p.id})">❌ Rejeter</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                    ${pending.length === 0 ? '<p>✅ Aucune validation en attente</p>' : ''}
+                </div>
+                
+                <div class="card">
+                    <h3>📊 Télécharger rapports</h3>
+                    <div class="date-input">
+                        <input type="date" id="startDateFin">
+                        <input type="date" id="endDateFin">
+                    </div>
+                    <button class="btn-pdf" onclick="downloadPDF('financial-by-date', ` + '`?start_date=${document.getElementById('startDateFin').value}&end_date=${document.getElementById('endDateFin').value}`' + `)">📄 PDF par date</button>
+                    <button class="btn-pdf" onclick="downloadPDF('financial')">📄 PDF complet</button>
+                </div>
+                
+                <div class="card">
+                    <h3>📋 Historique</h3>
+                    <div class="table-wrapper">
+                        <table><thead><tr><th>Date</th><th>Type</th><th>Montant</th><th>Libellé</th><th>Statut</th></tr></thead><tbody>
+                            ${finance.transactions.slice(0, 20).map(t => `
+                                <tr>
+                                    <td>${new Date(t.date).toLocaleDateString()}</td>
+                                    <td>${t.type === 'entree' ? '📥' : '📤'}</td>
+                                    <td>${t.montant.toLocaleString()}€</td>
+                                    <td>${t.libelle}</td>
+                                    <td>${t.statut === 'APPROUVE' ? '✅' : (t.statut === 'EN_ATTENTE' ? '⏳' : '❌')} ${t.statut}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody></table>
+                    </div>
+                </div>
+            `;
+            return html;
+        }
+        
+        async function validateTx(id, action) {
+            let raison = '';
+            if (action === 'REJETE') {
+                raison = prompt('Raison du rejet:');
+                if (!raison) return;
             }
             
-            const res = await fetch(API + `/api/ventes/create?produit=${encodeURIComponent(produit)}&quantite=${quantite}&prix_unitaire=${prix}`, {
+            await fetch(API + `/api/transactions/validate/${id}?action=${action}&raison=${encodeURIComponent(raison)}`, {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + token }
             });
-            if (res.ok) {
-                document.getElementById('venteMsg').innerHTML = '<div class="success">✅ Vente enregistrée !</div>';
-                document.getElementById('venteProduit').value = '';
-                document.getElementById('venteQuantite').value = '';
-                document.getElementById('ventePrix').value = '';
-                loadMyVentes();
-                setTimeout(() => document.getElementById('venteMsg').innerHTML = '', 3000);
-            } else {
-                document.getElementById('venteMsg').innerHTML = '<div class="error">❌ Erreur</div>';
+            location.reload();
+        }
+        
+        function showRejectReason(id) {
+            const raison = prompt('Raison du rejet:');
+            if (raison) {
+                validateTx(id, 'REJETE', raison);
             }
         }
         
-        async function loadMyVentes() {
-            const res = await fetch(API + '/api/ventes/agent/my-ventes', {
+        async function getDCView() {
+            const products = await getProducts();
+            const salesRes = await fetch(API + '/api/sales/all-reports', {
                 headers: { 'Authorization': 'Bearer ' + token }
             });
-            const ventes = await res.json();
-            if (ventes.length === 0) {
-                document.getElementById('mesVentes').innerHTML = '<p style="color:#888; text-align:center;">📭 Aucune vente enregistrée</p>';
-                return;
+            const sales = await salesRes.json();
+            
+            const revenueRes = await fetch(API + '/api/sales/total-revenue', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const revenue = await revenueRes.json();
+            
+            let html = `
+                <div class="card">
+                    <h3>💰 Chiffre d'affaires total</h3>
+                    <div class="stat-card"><p>${(revenue.total_revenue || 0).toLocaleString()}€</p></div>
+                </div>
+                
+                <div class="card">
+                    <h3>📦 Gestion des produits</h3>
+                    <input type="text" id="newProductName" placeholder="Nom du produit">
+                    <input type="number" id="newProductPrice" placeholder="Prix unitaire (€)">
+                    <button onclick="createProduct()">➕ Ajouter un produit</button>
+                    <div id="productMsg"></div>
+                    <div class="table-wrapper">
+                        <table><thead><tr><th>Produit</th><th>Prix</th><th>Action</th></tr></thead><tbody>
+                            ${products.map(p => `
+                                <tr>
+                                    <td>${p.nom}</td>
+                                    <td>${p.prix_unitaire}€</td>
+                                    <td><button class="btn-small" onclick="editProduct(${p.id})">✏️</button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody></table>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>📊 Télécharger rapports de vente</h3>
+                    <div class="date-input">
+                        <input type="date" id="startDateSales">
+                        <input type="date" id="endDateSales">
+                    </div>
+                    <button class="btn-pdf" onclick="downloadPDF('sales-by-date', ` + '`?start_date=${document.getElementById('startDateSales').value}&end_date=${document.getElementById('endDateSales').value}`' + `)">📄 PDF par date</button>
+                    <button class="btn-pdf" onclick="downloadPDF('sales')">📄 PDF complet</button>
+                </div>
+                
+                <div class="card">
+                    <h3>📋 Rapports des agents commerciaux</h3>
+                    <div class="table-wrapper">
+                        <table><thead><tr><th>Date</th><th>Agent</th><th>Produit</th><th>Quantité</th><th>Total</th></tr></thead><tbody>
+                            ${sales.map(s => `
+                                <tr>
+                                    <td>${new Date(s.date).toLocaleDateString()}</td>
+                                    <td>${s.agent}</td>
+                                    <td>${s.product}</td>
+                                    <td>${s.quantite}</td>
+                                    <td>${s.montant_total.toLocaleString()}€</td>
+                                </tr>
+                            `).join('')}
+                        </tbody></table>
+                    </div>
+                </div>
+            `;
+            return html;
+        }
+        
+        async function createProduct() {
+            const nom = document.getElementById('newProductName').value;
+            const prix = document.getElementById('newProductPrice').value;
+            
+            const res = await fetch(API + `/api/products/create?nom=${encodeURIComponent(nom)}&prix_unitaire=${prix}`, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            
+            if (res.ok) {
+                document.getElementById('productMsg').innerHTML = '<div class="success">✅ Produit ajouté</div>';
+                setTimeout(() => location.reload(), 1500);
             }
-            let html = '<div class="table-wrapper"></table><thead><tr><th>Produit</th><th>Qté</th><th>Prix</th><th>Total</th><th>Date</th></tr></thead><tbody>';
-            for (const v of ventes) {
-                html += `<tr>
-                    <td>${v.produit}</td>
-                    <td>${v.quantite}</td>
-                    <td>${v.prix_unitaire}€</td
-                    <td>${(v.quantite * v.prix_unitaire).toLocaleString()}€</td
-                    <td>${new Date(v.date).toLocaleDateString()}</td
-                </tr>`;
+        }
+        
+        async function getDGView() {
+            // DG can see everything - combine DT, DC, DAF views
+            const dtHtml = await getDTView();
+            const dcHtml = await getDCView();
+            const dafHtml = await getDAFView();
+            
+            // Add user creation card
+            const userCard = `
+                <div class="card">
+                    <h3>👥 Gestion des utilisateurs</h3>
+                    <input type="text" id="newUserNom" placeholder="Nom complet">
+                    <input type="email" id="newUserEmail" placeholder="Email">
+                    <input type="text" id="newUserUsername" placeholder="Nom d'utilisateur">
+                    <input type="password" id="newUserPassword" placeholder="Mot de passe">
+                    <select id="newUserRole">
+                        <option value="DT">🔧 Directeur Technique (DT)</option>
+                        <option value="DAF">📊 Directeur Administratif (DAF)</option>
+                        <option value="DIRECTEUR_COMMERCIAL">🛒 Directeur Commercial (DC)</option>
+                        <option value="COMPTABLE">💰 Comptable</option>
+                        <option value="AGENT_STOCK">📦 Agent Stock</option>
+                        <option value="AGENT_COMMERCIAL">📈 Agent Commercial</option>
+                    </select>
+                    <button onclick="createUserByDG()">➕ Créer l'utilisateur</button>
+                    <div id="userCreateMsg"></div>
+                </div>
+            `;
+            
+            return userCard + dtHtml + dcHtml + dafHtml;
+        }
+        
+        async function createUserByDG() {
+            const nom = document.getElementById('newUserNom').value;
+            const email = document.getElementById('newUserEmail').value;
+            const username = document.getElementById('newUserUsername').value;
+            const password = document.getElementById('newUserPassword').value;
+            const role = document.getElementById('newUserRole').value;
+            
+            const res = await fetch(API + `/api/users/create?nom=${encodeURIComponent(nom)}&email=${email}&username=${username}&mot_de_passe=${password}&role=${role}`, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            
+            if (res.ok) {
+                document.getElementById('userCreateMsg').innerHTML = '<div class="success">✅ Utilisateur créé</div>';
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                document.getElementById('userCreateMsg').innerHTML = '<div class="error">❌ Erreur</div>';
             }
-            html += '</tbody></table></div>';
-            document.getElementById('mesVentes').innerHTML = html;
         }
         
         function logout() { localStorage.clear(); window.location.href = '/'; }
