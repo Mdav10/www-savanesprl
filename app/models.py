@@ -38,7 +38,7 @@ class Product(Base):
     id = Column(Integer, primary_key=True, index=True)
     nom = Column(String, nullable=False)
     prix_unitaire = Column(Float, nullable=False)
-    created_by = Column(Integer, ForeignKey("users.id"))
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class StockMovement(Base):
@@ -67,7 +67,6 @@ class Transaction(Base):
     montant = Column(Float, nullable=False)
     libelle = Column(String, nullable=False)
     statut = Column(Enum(TransactionStatus), default=TransactionStatus.EN_ATTENTE)
-    raison_rejet = Column(String, nullable=True)
     valide_par = Column(Integer, ForeignKey("users.id"), nullable=True)
     cree_par = Column(Integer, ForeignKey("users.id"), nullable=False)
     date = Column(DateTime, default=datetime.utcnow)
@@ -77,6 +76,6 @@ class ActiviteLog(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     action = Column(String, nullable=False)
-    details = Column(Text)
-    ip_address = Column(String)
+    details = Column(Text, nullable=True)
+    ip_address = Column(String, nullable=True)
     date = Column(DateTime, default=datetime.utcnow)

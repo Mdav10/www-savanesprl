@@ -4,7 +4,7 @@ from app.database import get_db
 from app.models import User, ActiviteLog, RoleEnum
 from app.utils import verify_password, get_password_hash, create_access_token
 from app.schemas import UserLogin, TokenResponse
-from app.auth import get_current_user, role_required
+from app.auth import get_current_user
 import os
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
@@ -27,8 +27,6 @@ def create_default_dg(db: Session):
         db.add(dg)
         db.commit()
         print("✅ DG created")
-    else:
-        print("✅ DG exists")
 
 @router.post("/login", response_model=TokenResponse)
 def login(user_data: UserLogin, request: Request, db: Session = Depends(get_db)):
@@ -51,7 +49,7 @@ def login(user_data: UserLogin, request: Request, db: Session = Depends(get_db))
     }
 
 @router.post("/logout")
-def logout(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def logout(current_user: User = Depends(get_current_user)):
     return {"message": "Déconnecté"}
 
 @router.get("/me")

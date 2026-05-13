@@ -21,7 +21,7 @@ def create_transaction(
     
     if type == "entree":
         statut = TransactionStatus.APPROUVE
-        message = "✅ Entrée enregistrée et approuvée"
+        message = "✅ Entrée enregistrée"
     else:
         statut = TransactionStatus.EN_ATTENTE
         message = "⏳ Sortie en attente d'approbation"
@@ -42,7 +42,6 @@ def create_transaction(
 def validate_transaction(
     transaction_id: int,
     action: str,
-    raison: str = None,
     current_user = Depends(role_required(["DG", "DAF"])),
     db: Session = Depends(get_db)
 ):
@@ -58,13 +57,10 @@ def validate_transaction(
     
     if action.upper() == "APPROUVE":
         transaction.statut = TransactionStatus.APPROUVE
-        message = f"✅ Approuvée par {current_user.role_id}"
+        message = "Transaction approuvée"
     elif action.upper() == "REJETE":
         transaction.statut = TransactionStatus.REJETE
-        if not raison:
-            raise HTTPException(status_code=400, detail="Une raison est requise pour le rejet")
-        transaction.raison_rejet = raison
-        message = f"❌ Rejetée par {current_user.role_id}: {raison}"
+        message = "Transaction rejetée"
     else:
         raise HTTPException(status_code=400, detail="Action invalide")
     
@@ -88,8 +84,7 @@ def get_pending_transactions(
             "id": t.id,
             "montant": t.montant,
             "libelle": t.libelle,
-            "date": t.date,
-            "cree_par": t.cree_par
+            "date": t.date
         }
         for t in pending
     ]
@@ -123,35 +118,8 @@ def get_financial_dashboard(
                 "montant": t.montant,
                 "libelle": t.libelle,
                 "statut": t.statut,
-                "raison_rejet": t.raison_rejet,
                 "date": t.date
             }
             for t in transactions
         ]
     }
-
-@router.get("/reports/date-range")
-def get_transactions_by_date(
-    start_date: str,
-    end_date: str,
-    current_user = Depends(role_required(["COMPTABLE", "DG", "DAF"])),
-    db: Session = Depends(get_db)
-):
-    start = datetime.strptime(start_date, "%Y-%m-%d")
-    end = datetime.strptime(end_date, "%Y-%m-%d")
-    
-    transactions = db.query(Transaction).filter(
-        Transaction.date >= start,
-        Transaction.date <= end
-    ).order_by(Transaction.date.desc()).all()
-    
-    return [
-        {
-            "date": t.date,
-            "type": t.type,
-            "montant": t.montant,
-            "libelle": t.libelle,
-            "statut": t.statut
-        }
-        for t in transactions
-    ]

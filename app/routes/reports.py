@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -48,7 +48,7 @@ def download_transactions(
     current_user = Depends(role_required(["COMPTABLE", "DG", "DAF"])),
     db: Session = Depends(get_db)
 ):
-    transactions = db.query(Transaction).order_by(Transaction.date.desc()).all()
+    transactions = db.query(Transaction).order_by(Transaction.date.desc()).limit(500).all()
     data = [[t.date.strftime('%d/%m/%Y'), t.type, f"{t.montant:,.0f}€", t.libelle[:40], t.statut] for t in transactions]
     pdf = create_pdf_report("Rapport des Transactions", data, ["Date", "Type", "Montant", "Libellé", "Statut"])
     return Response(content=pdf.getvalue(), media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=transactions.pdf"})
@@ -69,7 +69,7 @@ def download_sales(
     current_user = Depends(role_required(["DG", "DIRECTEUR_COMMERCIAL"])),
     db: Session = Depends(get_db)
 ):
-    sales = db.query(SaleReport).order_by(SaleReport.date.desc()).all()
+    sales = db.query(SaleReport).order_by(SaleReport.date.desc()).limit(500).all()
     data = []
     for s in sales:
         product = db.query(Product).filter(Product.id == s.product_id).first()
@@ -83,7 +83,7 @@ def download_stock(
     current_user = Depends(role_required(["DG", "DT"])),
     db: Session = Depends(get_db)
 ):
-    movements = db.query(StockMovement).order_by(StockMovement.date.desc()).all()
+    movements = db.query(StockMovement).order_by(StockMovement.date.desc()).limit(500).all()
     data = []
     for m in movements:
         product = db.query(Product).filter(Product.id == m.product_id).first()
