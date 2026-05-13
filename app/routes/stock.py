@@ -26,24 +26,16 @@ def create_stock_movement(
     ).order_by(StockMovement.date.desc()).first()
     
     previous_disponible = last_movement.quantite_disponible if last_movement else 0
-    new_disponible = previous_disponible + quantite_entree - quantite_sortie
+    new_disponible = previous_disponible + int(quantite_entree) - int(quantite_sortie)
     
     movement = StockMovement(
         product_id=product_id,
-        quantite_entree=quantite_entree,
-        quantite_sortie=quantite_sortie,
+        quantite_entree=int(quantite_entree),
+        quantite_sortie=int(quantite_sortie),
         quantite_disponible=new_disponible,
         agent_id=current_user.id
     )
     db.add(movement)
-    db.commit()
-    
-    log = ActiviteLog(
-        user_id=current_user.id,
-        action="STOCK_MOVEMENT",
-        details=f"Produit {product.nom}: +{quantite_entree} -{quantite_sortie} = {new_disponible}"
-    )
-    db.add(log)
     db.commit()
     
     return {
@@ -69,37 +61,16 @@ def get_current_stock(
             "product_nom": product.nom,
             "prix_unitaire": product.prix_unitaire,
             "quantite_disponible": last_movement.quantite_disponible if last_movement else 0,
-            "dernier_mouvement": last_movement.date if last_movement else None
         })
     
     return result
-
-@router.get("/history/{product_id}")
-def get_stock_history(
-    product_id: int,
-    current_user = Depends(role_required(["DT", "DG"])),
-    db: Session = Depends(get_db)
-):
-    movements = db.query(StockMovement).filter(
-        StockMovement.product_id == product_id
-    ).order_by(StockMovement.date.desc()).all()
-    
-    return [
-        {
-            "date": m.date,
-            "quantite_entree": m.quantite_entree,
-            "quantite_sortie": m.quantite_sortie,
-            "quantite_disponible": m.quantite_disponible
-        }
-        for m in movements
-    ]
 
 @router.get("/reports/all")
 def get_all_stock_reports(
     current_user = Depends(role_required(["DT", "DG"])),
     db: Session = Depends(get_db)
 ):
-    movements = db.query(StockMovement).order_by(StockMovement.date.desc()).all()
+    movements = db.query(StockMovement).order_by(StockMovement.date.desc()).limit(200).all()
     result = []
     for m in movements:
         product = db.query(Product).filter(Product.id == m.product_id).first()
@@ -109,6 +80,5 @@ def get_all_stock_reports(
             "quantite_entree": m.quantite_entree,
             "quantite_sortie": m.quantite_sortie,
             "quantite_disponible": m.quantite_disponible,
-            "agent_id": m.agent_id
         })
     return result

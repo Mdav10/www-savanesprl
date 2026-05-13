@@ -9,7 +9,6 @@ import os
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
-# Get DG credentials from environment variables
 DG_USERNAME = os.getenv("DG_USERNAME", "OsiasHab")
 DG_PASSWORD = os.getenv("DG_PASSWORD", "08800Osi")
 
@@ -27,6 +26,9 @@ def create_default_dg(db: Session):
         )
         db.add(dg)
         db.commit()
+        print("✅ DG created")
+    else:
+        print("✅ DG exists")
 
 @router.post("/login", response_model=TokenResponse)
 def login(user_data: UserLogin, request: Request, db: Session = Depends(get_db)):
@@ -40,15 +42,6 @@ def login(user_data: UserLogin, request: Request, db: Session = Depends(get_db))
     
     token = create_access_token({"user_id": user.id, "role": user.role_id})
     
-    log = ActiviteLog(
-        user_id=user.id,
-        action="LOGIN",
-        details="Connexion réussie",
-        ip_address=request.client.host
-    )
-    db.add(log)
-    db.commit()
-    
     return {
         "access_token": token,
         "token_type": "bearer",
@@ -59,13 +52,6 @@ def login(user_data: UserLogin, request: Request, db: Session = Depends(get_db))
 
 @router.post("/logout")
 def logout(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    log = ActiviteLog(
-        user_id=current_user.id,
-        action="LOGOUT",
-        details="Déconnexion"
-    )
-    db.add(log)
-    db.commit()
     return {"message": "Déconnecté"}
 
 @router.get("/me")

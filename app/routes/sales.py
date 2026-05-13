@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from datetime import datetime, timedelta
 from app.database import get_db
 from app.models import SaleReport, Product, User, ActiviteLog
 from app.auth import get_current_user, role_required
@@ -30,14 +29,6 @@ def create_sale_report(
     db.add(sale)
     db.commit()
     
-    log = ActiviteLog(
-        user_id=current_user.id,
-        action="SALE_REPORT",
-        details=f"Vente: {quantite}x {product.nom} = {montant_total}€"
-    )
-    db.add(log)
-    db.commit()
-    
     return {
         "message": "Rapport de vente enregistré",
         "montant_total": montant_total
@@ -50,7 +41,7 @@ def get_my_sales_reports(
 ):
     reports = db.query(SaleReport).filter(
         SaleReport.agent_id == current_user.id
-    ).order_by(SaleReport.date.desc()).all()
+    ).order_by(SaleReport.date.desc()).limit(100).all()
     
     result = []
     for r in reports:
@@ -78,7 +69,7 @@ def get_all_sales_reports(
     current_user = Depends(role_required(["DIRECTEUR_COMMERCIAL", "DG"])),
     db: Session = Depends(get_db)
 ):
-    reports = db.query(SaleReport).order_by(SaleReport.date.desc()).all()
+    reports = db.query(SaleReport).order_by(SaleReport.date.desc()).limit(200).all()
     result = []
     for r in reports:
         product = db.query(Product).filter(Product.id == r.product_id).first()

@@ -53,14 +53,6 @@ def create_user(
     db.add(new_user)
     db.commit()
     
-    log = ActiviteLog(
-        user_id=current_user.id,
-        action="CREATE_USER",
-        details=f"Créé utilisateur {username} avec rôle {role}"
-    )
-    db.add(log)
-    db.commit()
-    
     return {"message": "Utilisateur créé", "user_id": new_user.id}
 
 @router.post("/disable/{user_id}")
@@ -81,8 +73,8 @@ def disable_user(
     
     return {"message": f"Utilisateur {user.nom} désactivé"}
 
-@router.post("/force-logout/{user_id}")
-def force_logout(
+@router.post("/enable/{user_id}")
+def enable_user(
     user_id: int,
     current_user = Depends(role_required(["DG"])),
     db: Session = Depends(get_db)
@@ -91,7 +83,7 @@ def force_logout(
     if not user:
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
     
-    user.session_token = None
+    user.is_active = True
     db.commit()
     
-    return {"message": f"Utilisateur {user.nom} déconnecté de force"}
+    return {"message": f"Utilisateur {user.nom} réactivé"}

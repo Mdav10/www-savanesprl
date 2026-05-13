@@ -38,14 +38,6 @@ def create_product(
     db.commit()
     db.refresh(product)
     
-    log = ActiviteLog(
-        user_id=current_user.id,
-        action="CREATE_PRODUCT",
-        details=f"Créé produit {nom} à {prix_unitaire}€"
-    )
-    db.add(log)
-    db.commit()
-    
     return {"message": "Produit créé", "product_id": product.id}
 
 @router.put("/{product_id}")
@@ -68,18 +60,3 @@ def update_product(
     db.commit()
     
     return {"message": "Produit modifié"}
-
-@router.delete("/{product_id}")
-def delete_product(
-    product_id: int,
-    current_user = Depends(role_required(["DG"])),
-    db: Session = Depends(get_db)
-):
-    product = db.query(Product).filter(Product.id == product_id).first()
-    if not product:
-        raise HTTPException(status_code=404, detail="Produit non trouvé")
-    
-    db.delete(product)
-    db.commit()
-    
-    return {"message": "Produit supprimé"}
