@@ -24,6 +24,8 @@
         .btn-small { width: auto; padding: 8px 16px; display: inline-block; margin: 5px; }
         .btn-pdf { background: #dc3545; }
         .btn-create { background: #28a745; }
+        .btn-approve { background: #28a745; }
+        .btn-reject { background: #dc3545; }
         .table-wrapper { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
         th, td { padding: 8px 4px; text-align: left; border-bottom: 1px solid #eee; }
@@ -131,7 +133,7 @@
                         <div class="table-wrapper">
                             <table>
                                 <thead><tr><th>Nom</th><th>Login</th><th>Rôle</th><th>Email</th></tr></thead>
-                                <tbody>${users.filter(u => u.role !== 'DG').map(u => `<tr><td>${u.nom}</td><td>${u.username}</td><td>${u.role}</td><td>${u.email}</td></tr>`).join('')}</tbody>
+                                <tbody>${users.filter(u => u.role !== 'DG').map(u => `<tr><td>${u.nom}</td><td>${u.username}</td><td>${u.role}</td><td>${u.email}</td>`).join('')}</tbody>
                             </table>
                         </div>
                     `}
@@ -142,8 +144,8 @@
                     ${products.length === 0 ? '<div class="empty">📭 Aucun produit</div>' : `
                         <div class="table-wrapper">
                             <table><thead><tr><th>Produit</th><th>Prix</th></tr></thead>
-                            <tbody>${products.map(p => `<tr><td>${p.nom}</td><td>${p.prix_unitaire.toLocaleString()} ${CURRENCY}</td></tr>`).join('')}</tbody>
-                            </table>
+                            <tbody>${products.map(p => `<tr><td>${p.nom}</td><td>${p.prix_unitaire.toLocaleString()} ${CURRENCY}</td>`).join('')}</tbody>
+                        </table>
                         </div>
                     `}
                 </div>
@@ -188,7 +190,6 @@
                 return;
             }
             
-            // Email validation
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 document.getElementById('createMsg').innerHTML = '<div class="error">⚠️ Email invalide</div>';
@@ -323,7 +324,7 @@
                 <div class="card"><h3>📋 Historique</h3>
                     ${finance.transactions.length === 0 ? '<div class="empty">📭 Aucune transaction</div>' : `
                         <div class="table-wrapper"><table><thead><tr><th>Date</th><th>Type</th><th>Montant</th><th>Statut</th></tr></thead>
-                        <tbody>${finance.transactions.slice(0, 20).map(t => `<tr><td>${new Date(t.date).toLocaleDateString()}</td><td>${t.type === 'entree' ? '📥' : '📤'}</td><td>${t.montant.toLocaleString()} ${CURRENCY}</td><td>${t.statut}</td></tr>`).join('')}</tbody></table></div>
+                        <tbody>${finance.transactions.slice(0, 20).map(t => `<tr><td>${new Date(t.date).toLocaleDateString()}</td><td>${t.type === 'entree' ? '📥' : '📤'}</td><td>${t.montant.toLocaleString()} ${CURRENCY}</td><td>${t.statut}</td>`).join('')}</tbody></table></div>
                     `}
                 </div>
                 <div class="card"><h3>📊 Télécharger PDF</h3><button class="btn-pdf" onclick="downloadPDF('transactions')">📄 Télécharger PDF</button></div>
@@ -359,7 +360,7 @@
             try { stockReports = await apiCall('/api/stock/reports/all'); } catch(e) {}
             return `
                 <div class="card"><h3>📋 Produits</h3>${products.length === 0 ? '<div class="empty">📭 Aucun</div>' : products.map(p => `<div class="product-item"><b>${p.nom}</b> - ${p.prix_unitaire.toLocaleString()} ${CURRENCY}</div>`).join('')}</div>
-                <div class="card"><h3>📦 Stock</h3>${stockReports.length === 0 ? '<div class="empty">📭 Aucun mouvement</div>' : `<div class="table-wrapper"><table><thead><tr><th>Date</th><th>Produit</th><th>Entrée</th><th>Sortie</th><th>Disponible</th></tr></thead><tbody>${stockReports.map(r => `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td>${r.product}</td><td>${r.quantite_entree}</td><td>${r.quantite_sortie}</td><td>${r.quantite_disponible}</td></tr>`).join('')}</tbody></table></div>`}</div>
+                <div class="card"><h3>📦 Stock</h3>${stockReports.length === 0 ? '<div class="empty">📭 Aucun mouvement</div>' : `<div class="table-wrapper"><tr><thead><tr><th>Date</th><th>Produit</th><th>Entrée</th><th>Sortie</th><th>Disponible</th></tr></thead><tbody>${stockReports.map(r => `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td>${r.product}</td><td>${r.quantite_entree}</td><td>${r.quantite_sortie}</td><td>${r.quantite_disponible}</td>`).join('')}</tbody></table></div>`}</div>
                 <div class="card"><h3>📊 PDF</h3><button class="btn-pdf" onclick="downloadPDF('stock')">📄 Télécharger PDF</button></div>
             `;
         }
@@ -371,8 +372,8 @@
             try { revenue = await apiCall('/api/sales/total-revenue'); } catch(e) {}
             return `
                 <div class="card"><h3>💰 CA Total</h3><div class="stat-card"><p>${revenue.total_revenue.toLocaleString()} ${CURRENCY}</p></div></div>
-                <div class="card"><h3>📦 Produits</h3><div class="flex"><input type="text" id="newProductDC" placeholder="Nom" style="flex:2"><input type="number" id="newPriceDC" placeholder="Prix" style="flex:1"><button onclick="createProductDC()" style="flex:1">➕ Ajouter</button></div><div id="productMsgDC"></div>${products.length === 0 ? '<div class="empty">📭 Aucun</div>' : `<div class="table-wrapper"><table><thead><tr><th>Produit</th><th>Prix</th></tr></thead><tbody>${products.map(p => `<tr><td>${p.nom}</td><td>${p.prix_unitaire.toLocaleString()} ${CURRENCY}</td></tr>`).join('')}</tbody></table></div>`}</div>
-                <div class="card"><h3>📋 Ventes</h3>${sales.length === 0 ? '<div class="empty">📭 Aucune vente</div>' : `<div class="table-wrapper"><table><thead><tr><th>Date</th><th>Agent</th><th>Produit</th><th>Qté</th><th>Total</th></tr></thead><tbody>${sales.map(s => `<tr><td>${new Date(s.date).toLocaleDateString()}</td><td>${s.agent}</td><td>${s.product}</td><td>${s.quantite}</td><td>${s.montant_total.toLocaleString()} ${CURRENCY}</td></tr>`).join('')}</tbody></table></div>`}</div>
+                <div class="card"><h3>📦 Produits</h3><div class="flex"><input type="text" id="newProductDC" placeholder="Nom" style="flex:2"><input type="number" id="newPriceDC" placeholder="Prix" style="flex:1"><button onclick="createProductDC()" style="flex:1">➕ Ajouter</button></div><div id="productMsgDC"></div>${products.length === 0 ? '<div class="empty">📭 Aucun</div>' : `<div class="table-wrapper"><table><thead><tr><th>Produit</th><th>Prix</th></tr></thead><tbody>${products.map(p => `<tr><td>${p.nom}</td><td>${p.prix_unitaire.toLocaleString()} ${CURRENCY}</td>`).join('')}</tbody></table></div>`}</div>
+                <div class="card"><h3>📋 Ventes</h3>${sales.length === 0 ? '<div class="empty">📭 Aucune vente</div>' : `<div class="table-wrapper"><tr><thead><tr><th>Date</th><th>Agent</th><th>Produit</th><th>Qté</th><th>Total</th></tr></thead><tbody>${sales.map(s => `<tr><td>${new Date(s.date).toLocaleDateString()}</td><td>${s.agent}</td><td>${s.product}</td><td>${s.quantite}</td><td>${s.montant_total.toLocaleString()} ${CURRENCY}</td>`).join('')}</tbody></table></div>`}</div>
                 <div class="card"><h3>📊 PDF</h3><button class="btn-pdf" onclick="downloadPDF('sales')">📄 Télécharger PDF</button></div>
             `;
         }
@@ -392,7 +393,7 @@
             return `
                 <div class="card"><h3>💰 Mes ventes</h3><div class="stat-card"><p>${revenue.total_revenue.toLocaleString()} ${CURRENCY}</p></div></div>
                 <div class="card"><h3>📝 Nouvelle vente</h3><select id="productSelect">${products.map(p => `<option value="${p.id}">${p.nom} - ${p.prix_unitaire.toLocaleString()} ${CURRENCY}</option>`).join('')}</select><input type="number" id="saleQty" placeholder="Quantité"><button onclick="createSale()">💾 Enregistrer</button><div id="saleMsg"></div></div>
-                <div class="card"><h3>📋 Mes ventes</h3>${reports.length === 0 ? '<div class="empty">📭 Aucune vente</div>' : `<div class="table-wrapper"><table><thead><tr><th>Date</th><th>Produit</th><th>Quantité</th><th>Total</th></tr></thead><tbody>${reports.map(r => `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td>${r.product}</td><td>${r.quantite}</td><td>${r.montant_total.toLocaleString()} ${CURRENCY}</td></tr>`).join('')}</tbody></table></div>`}</div>
+                <div class="card"><h3>📋 Mes ventes</h3>${reports.length === 0 ? '<div class="empty">📭 Aucune vente</div>' : `<div class="table-wrapper"><tr><thead><tr><th>Date</th><th>Produit</th><th>Quantité</th><th>Total</th></tr></thead><tbody>${reports.map(r => `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td>${r.product}</td><td>${r.quantite}</td><td>${r.montant_total.toLocaleString()} ${CURRENCY}</td>`).join('')}</tbody></table></div>`}</div>
             `;
         }
         
