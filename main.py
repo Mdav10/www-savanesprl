@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.database import engine, Base, SessionLocal
-from app.routes import auth, users, products, stock, sales, transactions, reports
 from app.routes.auth import create_default_dg
 
 # Create tables
@@ -17,6 +16,7 @@ db.close()
 
 app = FastAPI(title="SavaneSPRL")
 
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -29,15 +29,19 @@ app.add_middleware(
 os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Root endpoint
 @app.get("/")
 async def root():
     return FileResponse("static/index.html")
 
+# Dashboard endpoint
 @app.get("/dashboard")
 async def dashboard():
     return FileResponse("static/dashboard.html")
 
-# API routes
+# Import and include routes AFTER app is created
+from app.routes import auth, users, products, stock, sales, transactions, reports
+
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(products.router)

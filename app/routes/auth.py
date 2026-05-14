@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, RoleEnum
@@ -26,20 +26,15 @@ def create_default_dg(db: Session):
             db.add(dg)
             db.commit()
             print("✅ DG created")
-        else:
-            print("✅ DG already exists")
     except Exception as e:
-        print(f"Error creating DG: {e}")
+        print(f"Error: {e}")
         db.rollback()
 
 @router.post("/login")
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == user_data.username).first()
     
-    if not user:
-        raise HTTPException(status_code=401, detail="Identifiants incorrects")
-    
-    if not verify_password(user_data.mot_de_passe, user.mot_de_passe):
+    if not user or not verify_password(user_data.mot_de_passe, user.mot_de_passe):
         raise HTTPException(status_code=401, detail="Identifiants incorrects")
     
     if not user.is_active:
@@ -60,7 +55,7 @@ def logout():
     return {"message": "Déconnecté"}
 
 @router.get("/me")
-def get_me(current_user: User = Depends(get_current_user)):
+def get_me(current_user = Depends(get_current_user_from_auth)):
     return {
         "id": current_user.id,
         "nom": current_user.nom,
@@ -68,5 +63,5 @@ def get_me(current_user: User = Depends(get_current_user)):
         "is_active": current_user.is_active
     }
 
-# Import at the end to avoid circular import
-from app.auth import get_current_user
+# Import here to avoid circular import
+from app.auth import get_current_user as get_current_user_from_auth
