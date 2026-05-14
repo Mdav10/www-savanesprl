@@ -18,7 +18,7 @@ def create_product(
     current_user = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    if current_user.role not in ["DG", "DIRECTEUR_COMMERCIAL"]:
+    if current_user.role_id not in ["DG", "DIRECTEUR_COMMERCIAL"]:
         raise HTTPException(status_code=403, detail="Permission refusée")
     
     new_product = Product(

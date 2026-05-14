@@ -9,7 +9,7 @@ class User(Base):
     email = Column(String, nullable=False)
     username = Column(String, unique=True, index=True, nullable=False)
     mot_de_passe = Column(String, nullable=False)
-    role = Column(String, nullable=True)
+    role_id = Column(String, nullable=True)  # Changed from 'role' to 'role_id'
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
