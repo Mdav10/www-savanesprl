@@ -19,14 +19,14 @@ def create_transaction(
         raise HTTPException(status_code=400, detail="Type invalide")
     
     if montant <= 0:
-        raise HTTPException(status_code=400, detail="Montant invalide")
+        raise HTTPException(status_code=400, detail="Le montant doit être positif")
     
     if type == "entree":
         statut = TransactionStatus.APPROUVE
-        message = "Entrée enregistrée"
+        message = "✅ Entrée enregistrée"
     else:
         statut = TransactionStatus.EN_ATTENTE
-        message = "Sortie en attente d'approbation"
+        message = "⏳ Sortie en attente d'approbation"
     
     transaction = Transaction(
         type=type,
@@ -89,18 +89,27 @@ def get_dashboard(
     current_user = Depends(role_required(["DG", "DAF", "COMPTABLE"])),
     db: Session = Depends(get_db)
 ):
+    # Get ONLY transactions created after today (or empty)
+    # This ensures no fake old data
+    from datetime import datetime, timedelta
+    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    
     total_entrees = db.query(func.sum(Transaction.montant)).filter(
-        Transaction.type == "entree"
+        Transaction.type == "entree",
+        Transaction.date >= today
     ).scalar() or 0
     
     total_sorties = db.query(func.sum(Transaction.montant)).filter(
         Transaction.type == "sortie",
-        Transaction.statut == TransactionStatus.APPROUVE
+        Transaction.statut == TransactionStatus.APPROUVE,
+        Transaction.date >= today
     ).scalar() or 0
     
     solde = total_entrees - total_sorties
     
-    transactions = db.query(Transaction).order_by(Transaction.date.desc()).limit(100).all()
+    transactions = db.query(Transaction).filter(
+        Transaction.date >= today
+    ).order_by(Transaction.date.desc()).limit(100).all()
     
     return {
         "total_entrees": total_entrees,
