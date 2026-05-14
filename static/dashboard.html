@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SavaneSPRL - Dashboard</title>
+    <title>SavaneSPRL</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
@@ -20,6 +20,8 @@
         .stat-card{background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:20px;border-radius:16px;text-align:center}
         .stat-card h3{font-size:12px;margin-bottom:8px}
         .stat-card p{font-size:24px;font-weight:bold}
+        .flex{display:flex;gap:8px}
+        .flex button{width:auto}
     </style>
 </head>
 <body>
@@ -38,9 +40,12 @@
         async function apiCall(url, options={}) {
             const res = await fetch(url, {
                 ...options,
-                headers: {'Authorization': 'Bearer ' + token, ...options.headers}
+                headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...options.headers}
             });
-            if (!res.ok) throw new Error(await res.text());
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text.substring(0, 100));
+            }
             return res.json();
         }
         
@@ -52,11 +57,24 @@
         async function loadDGView() {
             // Load users
             let users = [];
-            try { users = await apiCall('/api/users/'); } catch(e) {}
+            try { 
+                const response = await fetch('/api/users/', {headers: {'Authorization': 'Bearer ' + token}});
+                if (response.ok) users = await response.json();
+            } catch(e) { console.log('Error loading users:', e); }
+            
+            // Load products
+            let products = [];
+            try { 
+                const response = await fetch('/api/products/', {headers: {'Authorization': 'Bearer ' + token}});
+                if (response.ok) products = await response.json();
+            } catch(e) { console.log('Error loading products:', e); }
             
             // Load finances
             let finance = { total_entrees: 0, total_sorties: 0, solde: 0 };
-            try { finance = await apiCall('/api/transactions/dashboard'); } catch(e) {}
+            try { 
+                const response = await fetch('/api/transactions/dashboard', {headers: {'Authorization': 'Bearer ' + token}});
+                if (response.ok) finance = await response.json();
+            } catch(e) { console.log('Error loading finance:', e); }
             
             document.getElementById('app').innerHTML = `
                 <div class="stats">
@@ -91,6 +109,31 @@
                         </table>
                     `}
                 </div>
+                
+                <div class="card">
+                    <h3>📦 Produits</h3>
+                    <div class="flex">
+                        <input type="text" id="productName" placeholder="Nom du produit" style="flex:2">
+                        <input type="number" id="productPrice" placeholder="Prix (FBU)" style="flex:1">
+                        <button onclick="createProduct()" style="flex:1">➕ Ajouter</button>
+                    </div>
+                    <div id="productMsg"></div>
+                    ${products.length === 0 ? '<p>Aucun produit</p>' : `
+                        <table><thead><tr><th>Nom</th><th>Prix (FBU)</th></tr></thead>
+                        <tbody>${products.map(p => `<tr><td>${p.nom}</td><td>${p.prix_unitaire.toLocaleString()} FBU</td></tr>`).join('')}</tbody>
+                        </table>
+                    `}
+                </div>
+                
+                <div class="card">
+                    <h3>📊 Télécharger rapports PDF</h3>
+                    <div class="flex">
+                        <button onclick="downloadPDF('transactions')">📄 Transactions</button>
+                        <button onclick="downloadPDF('financial')">📄 Financier</button>
+                        <button onclick="downloadPDF('sales')">📄 Ventes</button>
+                        <button onclick="downloadPDF('stock')">📄 Stock</button>
+                    </div>
+                </div>
             `;
         }
         
@@ -112,15 +155,45 @@
                     headers: {'Authorization': 'Bearer ' + token}
                 });
                 if (res.ok) {
+                    const data = await res.json();
                     document.getElementById('createMsg').innerHTML = '<div class="success">✅ Utilisateur créé avec succès</div>';
                     setTimeout(() => location.reload(), 1500);
                 } else {
-                    const err = await res.json();
-                    document.getElementById('createMsg').innerHTML = `<div class="error">❌ ${err.detail}</div>`;
+                    const err = await res.text();
+                    document.getElementById('createMsg').innerHTML = `<div class="error">❌ ${err}</div>`;
                 }
             } catch(e) {
                 document.getElementById('createMsg').innerHTML = `<div class="error">❌ ${e.message}</div>`;
             }
+        }
+        
+        async function createProduct() {
+            const nom = document.getElementById('productName').value;
+            const prix = document.getElementById('productPrice').value;
+            
+            if (!nom || !prix) {
+                document.getElementById('productMsg').innerHTML = '<div class="error">⚠️ Nom et prix requis</div>';
+                return;
+            }
+            
+            try {
+                const res = await fetch(`/api/products/create?nom=${encodeURIComponent(nom)}&prix_unitaire=${prix}`, {
+                    method: 'POST',
+                    headers: {'Authorization': 'Bearer ' + token}
+                });
+                if (res.ok) {
+                    document.getElementById('productMsg').innerHTML = '<div class="success">✅ Produit ajouté</div>';
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    document.getElementById('productMsg').innerHTML = `<div class="error">❌ Erreur</div>`;
+                }
+            } catch(e) {
+                document.getElementById('productMsg').innerHTML = `<div class="error">❌ ${e.message}</div>`;
+            }
+        }
+        
+        function downloadPDF(type) {
+            window.open(`/api/reports/${type}`, '_blank');
         }
         
         function logout() { localStorage.clear(); window.location.href = '/'; }

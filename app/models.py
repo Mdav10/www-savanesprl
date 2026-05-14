@@ -9,8 +9,15 @@ class User(Base):
     email = Column(String, nullable=False)
     username = Column(String, unique=True, index=True, nullable=False)
     mot_de_passe = Column(String, nullable=False)
-    role = Column(String, nullable=True)  # Allow NULL initially
+    role = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class Product(Base):
+    __tablename__ = "products"
+    id = Column(Integer, primary_key=True, index=True)
+    nom = Column(String, nullable=False)
+    prix_unitaire = Column(Float, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Transaction(Base):
