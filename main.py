@@ -21,11 +21,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.routes import auth, users, transactions, products
+from app.routes import auth, users, transactions, products, fix_db
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(transactions.router)
 app.include_router(products.router)
+app.include_router(fix_db.router)
 
 @app.get("/")
 def root():

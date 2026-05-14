@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SavaneSPRL - Dashboard</title>
+    <title>SavaneSPRL</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
@@ -12,13 +12,14 @@
         button{background:#007bff;color:white;border:none;padding:12px;border-radius:10px;cursor:pointer}
         .btn-danger{background:#dc3545}
         .btn-warning{background:#ffc107;color:#333}
-        .btn-small{padding:6px 12px;margin:0 5px}
+        .btn-success{background:#28a745}
+        .btn-small{padding:6px 12px;margin:0 5px;display:inline-block;width:auto}
         table{width:100%;border-collapse:collapse}
         th,td{padding:10px;text-align:left;border-bottom:1px solid #ddd}
         th{background:#f8f9fa}
         .success{color:green;background:#e6ffed;padding:10px;border-radius:8px;margin-top:8px}
         .error{color:red;background:#ffe5e5;padding:10px;border-radius:8px;margin-top:8px}
-        .flex{display:flex;gap:10px;flex-wrap:wrap}
+        .flex{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
         button{flex:1}
         .btn-small{flex:0}
     </style>
@@ -38,15 +39,28 @@
         async function apiCall(url, options={}) {
             const res = await fetch(url, {
                 ...options,
-                headers: {'Authorization': 'Bearer ' + token, ...options.headers}
+                headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...options.headers}
             });
             if (!res.ok) throw new Error(await res.text());
             return res.json();
         }
         
+        async function fixDatabase() {
+            if (!confirm('Cette action va supprimer la contrainte email unique et ajouter les rôles manquants. Continuer ?')) return;
+            document.getElementById('fixMsg').innerHTML = '<div class="success">⏳ Fix en cours...</div>';
+            try {
+                const res = await fetch('/api/fix/database', {headers: {'Authorization': 'Bearer ' + token}});
+                const data = await res.json();
+                document.getElementById('fixMsg').innerHTML = '<div class="success">✅ ' + data.message + '</div>';
+                setTimeout(() => location.reload(), 2000);
+            } catch(e) {
+                document.getElementById('fixMsg').innerHTML = '<div class="error">❌ Erreur: ' + e.message + '</div>';
+            }
+        }
+        
         async function loadDashboard() {
             if (role !== 'DG') {
-                document.getElementById('app').innerHTML = '<div class="card"><h3>Votre rôle: ' + role + '</h3></div>';
+                document.getElementById('app').innerHTML = '<div class="card"><h3>Votre rôle: ' + role + '</h3><p>Fonctionnalités à venir</p></div>';
                 return;
             }
             
@@ -60,18 +74,25 @@
             
             document.getElementById('app').innerHTML = `
                 <div class="card">
+                    <h3>🔧 FIXER LA BASE DE DONNÉES</h3>
+                    <p>Cliquez ici une fois pour supprimer la contrainte email unique et ajouter les rôles manquants.</p>
+                    <button class="btn-success" onclick="fixDatabase()">🔧 FIXER LA BASE DE DONNÉES</button>
+                    <div id="fixMsg"></div>
+                </div>
+                
+                <div class="card">
                     <h3>👥 Créer un utilisateur</h3>
                     <input type="text" id="nom" placeholder="Nom complet">
                     <input type="email" id="email" placeholder="Email">
                     <input type="text" id="username" placeholder="Nom d'utilisateur">
                     <input type="password" id="password" placeholder="Mot de passe">
                     <select id="roleSelect">
-                        <option value="AGENT_STOCK">Agent Stock</option>
-                        <option value="AGENT_COMMERCIAL">Agent Commercial</option>
-                        <option value="COMPTABLE">Comptable</option>
-                        <option value="DAF">DAF</option>
-                        <option value="DT">DT</option>
-                        <option value="DIRECTEUR_COMMERCIAL">Directeur Commercial</option>
+                        <option value="AGENT_STOCK">📦 Agent Stock</option>
+                        <option value="AGENT_COMMERCIAL">📈 Agent Commercial</option>
+                        <option value="COMPTABLE">💰 Comptable</option>
+                        <option value="DAF">📊 DAF</option>
+                        <option value="DT">🔧 DT</option>
+                        <option value="DIRECTEUR_COMMERCIAL">🛒 Directeur Commercial</option>
                     </select>
                     <button onclick="createUser()">➕ Créer l'utilisateur</button>
                     <div id="createMsg"></div>
@@ -83,17 +104,22 @@
                         ${nonDG.length > 0 ? `<button class="btn-warning" onclick="deleteAllUsers()" style="flex:0">🗑️ Tout supprimer</button>` : ''}
                     </div>
                     ${nonDG.length === 0 ? '<p>Aucun utilisateur</p>' : `
-                        <table>
-                            <thead><tr><th>Nom</th><th>Username</th><th>Rôle</th><th>Email</th><th>Action</th></tr></thead>
-                            <tbody>
-                                ${nonDG.map(u => `
-                                    <tr>
-                                        <td>${u.nom}</td><td>${u.username}</td><td>${u.role}</td><td>${u.email}</td>
-                                        <td><button class="btn-small btn-danger" onclick="deleteUser(${u.id})">🗑️ Supprimer</button></td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                        <div style="overflow-x:auto">
+                            <table style="width:100%">
+                                <thead><tr><th>Nom</th><th>Username</th><th>Rôle</th><th>Email</th><th>Action</th></tr></thead>
+                                <tbody>
+                                    ${nonDG.map(u => `
+                                        <tr>
+                                            <td>${u.nom}</td>
+                                            <td>${u.username}</td>
+                                            <td>${u.role}</td>
+                                            <td>${u.email}</td>
+                                            <td><button class="btn-small btn-danger" onclick="deleteUser(${u.id})">🗑️</button></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     `}
                 </div>
             `;
@@ -135,7 +161,7 @@
         }
         
         async function deleteAllUsers() {
-            if (!confirm('⚠️ Supprimer TOUS les utilisateurs ?')) return;
+            if (!confirm('⚠️ Supprimer TOUS les utilisateurs (sauf votre compte) ?')) return;
             await fetch('/api/users/delete-all', {method: 'DELETE', headers: {'Authorization': 'Bearer ' + token}});
             location.reload();
         }
