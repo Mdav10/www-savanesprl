@@ -1,8 +1,11 @@
 from passlib.context import CryptContext
+from jose import jwt
 from datetime import datetime, timedelta
-import secrets
+import os
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+SECRET_KEY = os.getenv("SECRET_KEY", "mysecretkey")
+ALGORITHM = "HS256"
 
 def verify_password(plain, hashed):
     return pwd_context.verify(plain, hashed)
@@ -10,18 +13,14 @@ def verify_password(plain, hashed):
 def get_password_hash(password):
     return pwd_context.hash(password)
 
-# Simple token functions (no JWT)
-import hashlib
-tokens = {}
-
 def create_token(data: dict):
-    token = secrets.token_urlsafe(32)
-    expiry = datetime.now() + timedelta(hours=8)
-    tokens[token] = {"data": data, "expiry": expiry}
-    return token
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(hours=8)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 def decode_token(token: str):
-    token_data = tokens.get(token)
-    if token_data and token_data["expiry"] > datetime.now():
-        return token_data["data"]
-    return None
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except:
+        return None

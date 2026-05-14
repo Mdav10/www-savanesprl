@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SavaneSPRL</title>
+    <title>SavaneSPRL - Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
@@ -9,22 +9,18 @@
         .header{background:white;padding:16px;border-radius:16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
         .card{background:white;border-radius:16px;padding:20px;margin-bottom:16px}
         input,select{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:10px}
-        button{background:#007bff;color:white;border:none;padding:12px;border-radius:10px;width:100%;cursor:pointer;margin-top:8px}
+        button{background:#007bff;color:white;border:none;padding:12px;border-radius:10px;cursor:pointer}
         .btn-danger{background:#dc3545}
         .btn-warning{background:#ffc107;color:#333}
-        .btn-success{background:#28a745}
-        .btn-small{padding:6px 12px;width:auto;margin:0 5px}
+        .btn-small{padding:6px 12px;margin:0 5px}
         table{width:100%;border-collapse:collapse}
         th,td{padding:10px;text-align:left;border-bottom:1px solid #ddd}
         th{background:#f8f9fa}
         .success{color:green;background:#e6ffed;padding:10px;border-radius:8px;margin-top:8px}
         .error{color:red;background:#ffe5e5;padding:10px;border-radius:8px;margin-top:8px}
-        .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
-        .stat-card{background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:20px;border-radius:16px;text-align:center}
-        .stat-card h3{font-size:12px;margin-bottom:8px}
-        .stat-card p{font-size:24px;font-weight:bold}
-        .flex{display:flex;gap:8px;flex-wrap:wrap}
-        .flex button{flex:1}
+        .flex{display:flex;gap:10px;flex-wrap:wrap}
+        button{flex:1}
+        .btn-small{flex:0}
     </style>
 </head>
 <body>
@@ -37,57 +33,32 @@
         const token = localStorage.getItem('token');
         const role = localStorage.getItem('role');
         if (!token) window.location.href = '/';
-        
         document.getElementById('userInfo').innerHTML = (role === 'DG' ? '👑 ' : '👤 ') + role;
         
         async function apiCall(url, options={}) {
             const res = await fetch(url, {
                 ...options,
-                headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...options.headers}
+                headers: {'Authorization': 'Bearer ' + token, ...options.headers}
             });
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(text.substring(0, 100));
-            }
+            if (!res.ok) throw new Error(await res.text());
             return res.json();
         }
         
         async function loadDashboard() {
-            if (role === 'DG') await loadDGView();
-            else document.getElementById('app').innerHTML = '<div class="card"><h3>Votre rôle: ' + role + '</h3><p>Fonctionnalités à venir</p></div>';
-        }
-        
-        async function loadDGView() {
-            // Load users
+            if (role !== 'DG') {
+                document.getElementById('app').innerHTML = '<div class="card"><h3>Votre rôle: ' + role + '</h3></div>';
+                return;
+            }
+            
             let users = [];
             try { 
-                const response = await fetch('/api/users/', {headers: {'Authorization': 'Bearer ' + token}});
-                if (response.ok) users = await response.json();
-            } catch(e) { console.log('Error loading users:', e); }
+                const res = await fetch('/api/users/', {headers: {'Authorization': 'Bearer ' + token}});
+                if (res.ok) users = await res.json();
+            } catch(e) { console.log(e); }
             
-            // Load products
-            let products = [];
-            try { 
-                const response = await fetch('/api/products/', {headers: {'Authorization': 'Bearer ' + token}});
-                if (response.ok) products = await response.json();
-            } catch(e) { console.log('Error loading products:', e); }
-            
-            // Load finances
-            let finance = { total_entrees: 0, total_sorties: 0, solde: 0 };
-            try { 
-                const response = await fetch('/api/transactions/dashboard', {headers: {'Authorization': 'Bearer ' + token}});
-                if (response.ok) finance = await response.json();
-            } catch(e) { console.log('Error loading finance:', e); }
-            
-            const nonDGUsers = users.filter(u => u.role !== 'DG');
+            const nonDG = users.filter(u => u.role !== 'DG');
             
             document.getElementById('app').innerHTML = `
-                <div class="stats">
-                    <div class="stat-card"><h3>💰 Entrées</h3><p>${finance.total_entrees.toLocaleString()} FBU</p></div>
-                    <div class="stat-card"><h3>📤 Sorties</h3><p>${finance.total_sorties.toLocaleString()} FBU</p></div>
-                    <div class="stat-card"><h3>💵 Solde</h3><p>${finance.solde.toLocaleString()} FBU</p></div>
-                </div>
-                
                 <div class="card">
                     <h3>👥 Créer un utilisateur</h3>
                     <input type="text" id="nom" placeholder="Nom complet">
@@ -108,43 +79,21 @@
                 
                 <div class="card">
                     <div class="flex">
-                        <h3 style="flex:1">👥 Utilisateurs (${nonDGUsers.length})</h3>
-                        ${nonDGUsers.length > 0 ? `<button class="btn-warning" onclick="deleteAllUsers()" style="width:auto">🗑️ Tout supprimer</button>` : ''}
+                        <h3 style="flex:1">👥 Utilisateurs (${nonDG.length})</h3>
+                        ${nonDG.length > 0 ? `<button class="btn-warning" onclick="deleteAllUsers()" style="flex:0">🗑️ Tout supprimer</button>` : ''}
                     </div>
-                    ${nonDGUsers.length === 0 ? '<p>Aucun utilisateur</p>' : `
-                        <div class="table-wrapper">
-                            <table>
-                                <thead><tr><th>Nom</th><th>Username</th><th>Rôle</th><th>Email</th><th>Action</th></tr></thead>
-                                <tbody>
-                                    ${nonDGUsers.map(u => `
-                                        <tr>
-                                            <td>${u.nom}</td>
-                                            <td>${u.username}</td>
-                                            <td>${u.role}</td>
-                                            <td>${u.email}</td>
-                                            <td><button class="btn-small btn-danger" onclick="deleteUser(${u.id})">🗑️ Supprimer</button></td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    `}
-                </div>
-                
-                <div class="card">
-                    <h3>📦 Produits</h3>
-                    <div class="flex">
-                        <input type="text" id="productName" placeholder="Nom du produit" style="flex:2">
-                        <input type="number" id="productPrice" placeholder="Prix (FBU)" style="flex:1">
-                        <button onclick="createProduct()" style="flex:1">➕ Ajouter</button>
-                    </div>
-                    <div id="productMsg"></div>
-                    ${products.length === 0 ? '<p>Aucun produit</p>' : `
-                        <div class="table-wrapper">
-                            <table><thead><tr><th>Nom</th><th>Prix (FBU)</th></tr></thead>
-                            <tbody>${products.map(p => `<tr><td>${p.nom}</td><td>${p.prix_unitaire.toLocaleString()} FBU</td></tr>`).join('')}</tbody>
+                    ${nonDG.length === 0 ? '<p>Aucun utilisateur</p>' : `
+                        <table>
+                            <thead><tr><th>Nom</th><th>Username</th><th>Rôle</th><th>Email</th><th>Action</th></tr></thead>
+                            <tbody>
+                                ${nonDG.map(u => `
+                                    <tr>
+                                        <td>${u.nom}</td><td>${u.username}</td><td>${u.role}</td><td>${u.email}</td>
+                                        <td><button class="btn-small btn-danger" onclick="deleteUser(${u.id})">🗑️ Supprimer</button></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
                         </table>
-                        </div>
                     `}
                 </div>
             `;
@@ -168,8 +117,8 @@
                     headers: {'Authorization': 'Bearer ' + token}
                 });
                 if (res.ok) {
-                    document.getElementById('createMsg').innerHTML = '<div class="success">✅ Utilisateur créé avec succès</div>';
-                    setTimeout(() => location.reload(), 1500);
+                    document.getElementById('createMsg').innerHTML = '<div class="success">✅ Utilisateur créé</div>';
+                    setTimeout(() => location.reload(), 1000);
                 } else {
                     const err = await res.json();
                     document.getElementById('createMsg').innerHTML = `<div class="error">❌ ${err.detail}</div>`;
@@ -179,55 +128,16 @@
             }
         }
         
-        async function deleteUser(userId) {
+        async function deleteUser(id) {
             if (!confirm('Supprimer cet utilisateur ?')) return;
-            try {
-                await fetch(`/api/users/${userId}`, {
-                    method: 'DELETE',
-                    headers: {'Authorization': 'Bearer ' + token}
-                });
-                location.reload();
-            } catch(e) {
-                alert('Erreur: ' + e.message);
-            }
+            await fetch(`/api/users/${id}`, {method: 'DELETE', headers: {'Authorization': 'Bearer ' + token}});
+            location.reload();
         }
         
         async function deleteAllUsers() {
-            if (!confirm('⚠️ Supprimer TOUS les utilisateurs (sauf votre compte DG) ? Cette action est irréversible !')) return;
-            try {
-                await fetch('/api/users/delete-all-test-users', {
-                    method: 'DELETE',
-                    headers: {'Authorization': 'Bearer ' + token}
-                });
-                location.reload();
-            } catch(e) {
-                alert('Erreur: ' + e.message);
-            }
-        }
-        
-        async function createProduct() {
-            const nom = document.getElementById('productName').value;
-            const prix = document.getElementById('productPrice').value;
-            
-            if (!nom || !prix) {
-                document.getElementById('productMsg').innerHTML = '<div class="error">⚠️ Nom et prix requis</div>';
-                return;
-            }
-            
-            try {
-                const res = await fetch(`/api/products/create?nom=${encodeURIComponent(nom)}&prix_unitaire=${prix}`, {
-                    method: 'POST',
-                    headers: {'Authorization': 'Bearer ' + token}
-                });
-                if (res.ok) {
-                    document.getElementById('productMsg').innerHTML = '<div class="success">✅ Produit ajouté</div>';
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    document.getElementById('productMsg').innerHTML = '<div class="error">❌ Erreur</div>';
-                }
-            } catch(e) {
-                document.getElementById('productMsg').innerHTML = `<div class="error">❌ ${e.message}</div>`;
-            }
+            if (!confirm('⚠️ Supprimer TOUS les utilisateurs ?')) return;
+            await fetch('/api/users/delete-all', {method: 'DELETE', headers: {'Authorization': 'Bearer ' + token}});
+            location.reload();
         }
         
         function logout() { localStorage.clear(); window.location.href = '/'; }

@@ -5,10 +5,8 @@ from fastapi.responses import FileResponse
 from app.database import engine, Base, SessionLocal
 from app.routes.auth import init_dg
 
-# Create tables
 Base.metadata.create_all(bind=engine)
 
-# Initialize DG user
 db = SessionLocal()
 init_dg(db)
 db.close()
@@ -23,14 +21,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Import routes
-from app.routes import auth, users, transactions, products, fix_db_route
-
+from app.routes import auth, users, transactions, products
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(transactions.router)
 app.include_router(products.router)
-app.include_router(fix_db_route.router)
 
 @app.get("/")
 def root():
