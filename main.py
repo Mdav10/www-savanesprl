@@ -1,22 +1,18 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.database import engine, Base, SessionLocal
-from app.routes.auth import create_default_dg
+from app.routes.auth import init_dg
 
-# Create tables
 Base.metadata.create_all(bind=engine)
 
-# Create default DG
 db = SessionLocal()
-create_default_dg(db)
+init_dg(db)
 db.close()
 
-app = FastAPI(title="SavaneSPRL")
+app = FastAPI()
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -25,30 +21,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve static files
-os.makedirs("static", exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Root endpoint
-@app.get("/")
-async def root():
-    return FileResponse("static/index.html")
-
-# Dashboard endpoint
-@app.get("/dashboard")
-async def dashboard():
-    return FileResponse("static/dashboard.html")
-
-# Import routes
-from app.routes import auth, users, products, stock, sales, transactions, reports
-
+from app.routes import auth, users, transactions
 app.include_router(auth.router)
 app.include_router(users.router)
-app.include_router(products.router)
-app.include_router(stock.router)
-app.include_router(sales.router)
 app.include_router(transactions.router)
-app.include_router(reports.router)
+
+@app.get("/")
+def root():
+    return {"message": "SavaneSPRL API", "status": "running"}
 
 if __name__ == "__main__":
     import uvicorn

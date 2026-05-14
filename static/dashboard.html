@@ -1,412 +1,131 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SavaneSPRL</title>
+    <title>SavaneSPRL - Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta charset="UTF-8">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; padding-bottom: 80px; }
-        .header { background: white; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .header h2 { font-size: 18px; color: #1a1a2e; }
-        .user-info { display: flex; align-items: center; gap: 10px; }
-        .user-badge { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; }
-        .logout-btn { background: #dc3545; color: white; border: none; padding: 6px 16px; border-radius: 20px; font-size: 12px; cursor: pointer; }
-        .container { padding: 16px; max-width: 600px; margin: 0 auto; }
-        .card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .card h3 { font-size: 16px; margin-bottom: 12px; border-left: 4px solid #007bff; padding-left: 10px; }
-        .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .stat-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px; border-radius: 12px; text-align: center; }
-        .stat-card h4 { font-size: 11px; margin-bottom: 4px; }
-        .stat-card p { font-size: 18px; font-weight: bold; }
-        input, select { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; }
-        button { background: #007bff; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 8px; }
-        .btn-small { width: auto; padding: 8px 16px; display: inline-block; margin: 5px; }
-        .btn-pdf { background: #dc3545; }
-        .btn-create { background: #28a745; }
-        .btn-approve { background: #28a745; }
-        .btn-reject { background: #dc3545; }
-        .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th, td { padding: 8px 4px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f8f9fa; }
-        .success { color: #28a745; background: #e6ffed; padding: 10px; border-radius: 8px; margin-top: 8px; font-size: 12px; }
-        .error { color: #dc3545; background: #ffe5e5; padding: 10px; border-radius: 8px; margin-top: 8px; font-size: 12px; }
-        .empty { text-align: center; padding: 20px; color: #999; font-style: italic; }
-        .pending-card { background: #f8f9fa; border-radius: 12px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #ffc107; }
-        .product-item { background: #f8f9fa; padding: 12px; margin: 8px 0; border-radius: 10px; }
-        .flex { display: flex; gap: 8px; flex-wrap: wrap; }
-        .flex button { flex: 1; margin: 0; }
-        .loading { text-align: center; padding: 40px; color: #666; }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:Arial;background:#f0f2f5;padding:16px}
+        .header{background:white;padding:16px;border-radius:16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+        .card{background:white;border-radius:16px;padding:20px;margin-bottom:16px}
+        input,select{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:10px}
+        button{background:#007bff;color:white;border:none;padding:12px;border-radius:10px;width:100%;cursor:pointer;margin-top:8px}
+        .btn-danger{background:#dc3545}
+        .btn-success{background:#28a745}
+        table{width:100%;border-collapse:collapse}
+        th,td{padding:10px;text-align:left;border-bottom:1px solid #ddd}
+        .success{color:green;background:#e6ffed;padding:10px;border-radius:8px;margin-top:8px}
+        .error{color:red;background:#ffe5e5;padding:10px;border-radius:8px;margin-top:8px}
+        .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
+        .stat-card{background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:20px;border-radius:16px;text-align:center}
+        .stat-card h3{font-size:12px;margin-bottom:8px}
+        .stat-card p{font-size:24px;font-weight:bold}
     </style>
 </head>
 <body>
     <div class="header">
         <h2>🏢 SavaneSPRL</h2>
-        <div class="user-info">
-            <span class="user-badge" id="userInfo"></span>
-            <button class="logout-btn" onclick="logout()">🚪 Déconnexion</button>
-        </div>
+        <div><span id="userInfo"></span> <button class="btn-danger" onclick="logout()" style="width:auto;margin-left:10px">Déconnexion</button></div>
     </div>
-    <div class="container" id="app"><div class="loading">⏳ Chargement...</div></div>
+    <div id="app"></div>
     <script>
         const token = localStorage.getItem('token');
-        const userRole = localStorage.getItem('userRole');
+        const role = localStorage.getItem('role');
+        if (!token) window.location.href = '/';
         
-        if (!token) {
-            window.location.href = '/';
-        }
+        document.getElementById('userInfo').innerHTML = (role === 'DG' ? '👑 ' : '👤 ') + role;
         
-        const API = window.location.origin;
-        const CURRENCY = 'FBU';
-        
-        document.getElementById('userInfo').innerHTML = getIcon() + ' ' + userRole;
-        
-        function getIcon() {
-            const icons = { 'DG':'👑','DAF':'📊','DT':'🔧','DIRECTEUR_COMMERCIAL':'🛒','COMPTABLE':'💰','AGENT_STOCK':'📦','AGENT_COMMERCIAL':'📈' };
-            return icons[userRole] || '👤';
-        }
-        
-        async function apiCall(url, opts={}) {
-            const headers = {
-                'Authorization': 'Bearer ' + token,
-                'Content-Type': 'application/json'
-            };
-            const res = await fetch(API + url, {
-                ...opts,
-                headers: { ...headers, ...opts.headers }
+        async function apiCall(url, options={}) {
+            const res = await fetch(url, {
+                ...options,
+                headers: {'Authorization': 'Bearer ' + token, ...options.headers}
             });
-            if (res.status === 401) {
-                localStorage.clear();
-                window.location.href = '/';
-                throw new Error('Session expirée');
-            }
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(text.substring(0, 100));
-            }
+            if (!res.ok) throw new Error(await res.text());
             return res.json();
         }
         
-        async function load() {
-            try {
-                let html = '';
-                if (userRole === 'DG') html = await dgView();
-                else if (userRole === 'COMPTABLE') html = await comptableView();
-                else if (userRole === 'DAF') html = await dafView();
-                else if (userRole === 'DT') html = await dtView();
-                else if (userRole === 'DIRECTEUR_COMMERCIAL') html = await dcView();
-                else if (userRole === 'AGENT_STOCK') html = await stockView();
-                else if (userRole === 'AGENT_COMMERCIAL') html = await commercialView();
-                else html = '<div class="card">Rôle non reconnu</div>';
-                document.getElementById('app').innerHTML = html;
-            } catch(e) {
-                document.getElementById('app').innerHTML = `<div class="card error">❌ ${e.message}</div>`;
-            }
+        async function loadDashboard() {
+            if (role === 'DG') await loadDGView();
+            else document.getElementById('app').innerHTML = '<div class="card"><h3>Votre rôle: ' + role + '</h3><p>Fonctionnalités à venir</p></div>';
         }
         
-        async function dgView(){
-            let users=[], products=[], finance={total_entrees:0,total_sorties:0,solde:0}, pending=[];
-            try{ users=await apiCall('/api/users/'); }catch(e){}
-            try{ products=await apiCall('/api/products/'); }catch(e){}
-            try{ finance=await apiCall('/api/transactions/dashboard'); }catch(e){}
-            try{ pending=await apiCall('/api/transactions/pending'); }catch(e){}
-            return `
-                <div class="card"><h3>👥 Créer un utilisateur</h3>
-                    <input type="text" id="newNom" placeholder="Nom complet">
-                    <input type="email" id="newEmail" placeholder="Email">
-                    <input type="text" id="newUsername" placeholder="Nom d'utilisateur">
-                    <input type="password" id="newPassword" placeholder="Mot de passe">
-                    <select id="newRole">
-                        <option value="DT">🔧 Directeur Technique (DT)</option>
-                        <option value="DAF">📊 Directeur Administratif (DAF)</option>
-                        <option value="DIRECTEUR_COMMERCIAL">🛒 Directeur Commercial (DC)</option>
-                        <option value="COMPTABLE">💰 Comptable</option>
-                        <option value="AGENT_STOCK">📦 Agent Stock</option>
-                        <option value="AGENT_COMMERCIAL">📈 Agent Commercial</option>
+        async function loadDGView() {
+            // Load users
+            let users = [];
+            try { users = await apiCall('/api/users/'); } catch(e) {}
+            
+            // Load finances
+            let finance = { total_entrees: 0, total_sorties: 0, solde: 0 };
+            try { finance = await apiCall('/api/transactions/dashboard'); } catch(e) {}
+            
+            document.getElementById('app').innerHTML = `
+                <div class="stats">
+                    <div class="stat-card"><h3>💰 Entrées</h3><p>${finance.total_entrees.toLocaleString()} FBU</p></div>
+                    <div class="stat-card"><h3>📤 Sorties</h3><p>${finance.total_sorties.toLocaleString()} FBU</p></div>
+                    <div class="stat-card"><h3>💵 Solde</h3><p>${finance.solde.toLocaleString()} FBU</p></div>
+                </div>
+                
+                <div class="card">
+                    <h3>👥 Créer un utilisateur</h3>
+                    <input type="text" id="nom" placeholder="Nom complet">
+                    <input type="email" id="email" placeholder="Email">
+                    <input type="text" id="username" placeholder="Nom d'utilisateur">
+                    <input type="password" id="password" placeholder="Mot de passe">
+                    <select id="roleSelect">
+                        <option value="AGENT_STOCK">Agent Stock</option>
+                        <option value="AGENT_COMMERCIAL">Agent Commercial</option>
+                        <option value="COMPTABLE">Comptable</option>
+                        <option value="DAF">DAF</option>
+                        <option value="DT">DT</option>
+                        <option value="DIRECTEUR_COMMERCIAL">Directeur Commercial</option>
                     </select>
-                    <button class="btn-create" onclick="createUser()">➕ Créer l'utilisateur</button>
+                    <button onclick="createUser()">➕ Créer l'utilisateur</button>
                     <div id="createMsg"></div>
                 </div>
-                <div class="card"><h3>👥 Utilisateurs existants</h3>
-                    ${users.filter(u => u.role !== 'DG').length === 0 ? '<div class="empty">📭 Aucun utilisateur créé</div>' : `
-                        <div class="table-wrapper">
-                            <table>
-                                <thead><tr><th>Nom</th><th>Login</th><th>Rôle</th><th>Email</th></tr></thead>
-                                <tbody>${users.filter(u => u.role !== 'DG').map(u => `<tr><td>${u.nom}</td><td>${u.username}</td><td>${u.role}</td><td>${u.email}</td>`).join('')}</tbody>
-                            </table>
-                        </div>
-                    `}
-                </div>
-                <div class="card"><h3>📦 Produits</h3>
-                    <div class="flex"><input type="text" id="productName" placeholder="Nom du produit" style="flex:2"><input type="number" id="productPrice" placeholder="Prix (FBU)" style="flex:1"><button onclick="createProduct()" style="flex:1">➕ Ajouter</button></div>
-                    <div id="productMsg"></div>
-                    ${products.length === 0 ? '<div class="empty">📭 Aucun produit</div>' : `
-                        <div class="table-wrapper">
-                            <table><thead><tr><th>Produit</th><th>Prix</th></tr></thead>
-                            <tbody>${products.map(p => `<tr><td>${p.nom}</td><td>${p.prix_unitaire.toLocaleString()} ${CURRENCY}</td>`).join('')}</tbody>
+                
+                <div class="card">
+                    <h3>👥 Utilisateurs (${users.length})</h3>
+                    ${users.length === 0 ? '<p>Aucun utilisateur</p>' : `
+                        <table><thead><tr><th>Nom</th><th>Username</th><th>Rôle</th><th>Email</th></tr></thead>
+                        <tbody>${users.filter(u => u.role !== 'DG').map(u => `<tr><td>${u.nom}</td><td>${u.username}</td><td>${u.role}</td><td>${u.email}</td></tr>`).join('')}</tbody>
                         </table>
-                        </div>
                     `}
-                </div>
-                <div class="card"><h3>💰 Finances</h3>
-                    <div class="stats">
-                        <div class="stat-card"><h4>Entrées</h4><p>${finance.total_entrees.toLocaleString()} ${CURRENCY}</p></div>
-                        <div class="stat-card"><h4>Sorties</h4><p>${finance.total_sorties.toLocaleString()} ${CURRENCY}</p></div>
-                        <div class="stat-card"><h4>Solde</h4><p>${finance.solde.toLocaleString()} ${CURRENCY}</p></div>
-                    </div>
-                </div>
-                <div class="card"><h3>⏳ Validations en attente</h3>
-                    ${pending.length === 0 ? '<div class="empty">✅ Aucune validation en attente</div>' : pending.map(p => `
-                        <div class="pending-card">
-                            <b>${p.libelle}</b><br>
-                            💰 ${p.montant.toLocaleString()} ${CURRENCY}<br>
-                            📅 ${new Date(p.date).toLocaleDateString()}<br>
-                            <div class="flex">
-                                <button class="btn-approve" onclick="validateTx(${p.id}, 'APPROUVE')">✅ Approuver</button>
-                                <button class="btn-reject" onclick="validateTx(${p.id}, 'REJETE')">❌ Rejeter</button>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-                <div class="card"><h3>📊 Télécharger rapports PDF</h3>
-                    <button class="btn-pdf" onclick="downloadPDF('transactions')">📄 Transactions</button>
-                    <button class="btn-pdf" onclick="downloadPDF('financial')">📄 Financier</button>
-                    <button class="btn-pdf" onclick="downloadPDF('sales')">📄 Ventes</button>
-                    <button class="btn-pdf" onclick="downloadPDF('stock')">📄 Stock</button>
                 </div>
             `;
         }
         
         async function createUser() {
-            const nom = document.getElementById('newNom').value;
-            const email = document.getElementById('newEmail').value;
-            const username = document.getElementById('newUsername').value;
-            const password = document.getElementById('newPassword').value;
-            const role = document.getElementById('newRole').value;
+            const nom = document.getElementById('nom').value;
+            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('roleSelect').value;
             
             if (!nom || !email || !username || !password) {
                 document.getElementById('createMsg').innerHTML = '<div class="error">⚠️ Tous les champs sont requis</div>';
                 return;
             }
             
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                document.getElementById('createMsg').innerHTML = '<div class="error">⚠️ Email invalide</div>';
-                return;
-            }
-            
             try {
-                const res = await fetch(API + `/api/users/create?nom=${encodeURIComponent(nom)}&email=${encodeURIComponent(email)}&username=${encodeURIComponent(username)}&mot_de_passe=${encodeURIComponent(password)}&role=${role}`, {
+                const res = await fetch(`/api/users/create?nom=${encodeURIComponent(nom)}&email=${encodeURIComponent(email)}&username=${encodeURIComponent(username)}&mot_de_passe=${encodeURIComponent(password)}&role=${role}`, {
                     method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + token }
+                    headers: {'Authorization': 'Bearer ' + token}
                 });
-                
                 if (res.ok) {
                     document.getElementById('createMsg').innerHTML = '<div class="success">✅ Utilisateur créé avec succès</div>';
-                    document.getElementById('newNom').value = '';
-                    document.getElementById('newEmail').value = '';
-                    document.getElementById('newUsername').value = '';
-                    document.getElementById('newPassword').value = '';
                     setTimeout(() => location.reload(), 1500);
                 } else {
                     const err = await res.json();
-                    document.getElementById('createMsg').innerHTML = `<div class="error">❌ ${err.detail || 'Erreur lors de la création'}</div>`;
+                    document.getElementById('createMsg').innerHTML = `<div class="error">❌ ${err.detail}</div>`;
                 }
             } catch(e) {
                 document.getElementById('createMsg').innerHTML = `<div class="error">❌ ${e.message}</div>`;
             }
         }
         
-        async function createProduct() {
-            const nom = document.getElementById('productName').value;
-            const prix = document.getElementById('productPrice').value;
-            if (!nom || !prix) {
-                document.getElementById('productMsg').innerHTML = '<div class="error">⚠️ Nom et prix requis</div>';
-                return;
-            }
-            try {
-                await apiCall(`/api/products/create?nom=${encodeURIComponent(nom)}&prix_unitaire=${prix}`, { method: 'POST' });
-                document.getElementById('productMsg').innerHTML = '<div class="success">✅ Produit ajouté</div>';
-                setTimeout(() => location.reload(), 1500);
-            } catch(e) {
-                document.getElementById('productMsg').innerHTML = `<div class="error">❌ ${e.message}</div>`;
-            }
-        }
+        function logout() { localStorage.clear(); window.location.href = '/'; }
         
-        async function createProductDC() {
-            const nom = document.getElementById('newProductDC').value;
-            const prix = document.getElementById('newPriceDC').value;
-            if (!nom || !prix) {
-                document.getElementById('productMsgDC').innerHTML = '<div class="error">⚠️ Nom et prix requis</div>';
-                return;
-            }
-            try {
-                await apiCall(`/api/products/create?nom=${encodeURIComponent(nom)}&prix_unitaire=${prix}`, { method: 'POST' });
-                document.getElementById('productMsgDC').innerHTML = '<div class="success">✅ Produit ajouté</div>';
-                setTimeout(() => location.reload(), 1500);
-            } catch(e) {
-                document.getElementById('productMsgDC').innerHTML = `<div class="error">❌ ${e.message}</div>`;
-            }
-        }
-        
-        async function createTransaction() {
-            const type = document.getElementById('txType').value;
-            const montant = document.getElementById('txMontant').value;
-            const libelle = document.getElementById('txLibelle').value;
-            if (!montant || !libelle) {
-                document.getElementById('txMsg').innerHTML = '<div class="error">⚠️ Tous les champs requis</div>';
-                return;
-            }
-            try {
-                const res = await apiCall(`/api/transactions/create?type=${type}&montant=${montant}&libelle=${encodeURIComponent(libelle)}`, { method: 'POST' });
-                document.getElementById('txMsg').innerHTML = `<div class="success">${res.message}</div>`;
-                setTimeout(() => location.reload(), 1500);
-            } catch(e) {
-                document.getElementById('txMsg').innerHTML = `<div class="error">❌ ${e.message}</div>`;
-            }
-        }
-        
-        async function createSale() {
-            const productId = document.getElementById('productSelect').value;
-            const qty = document.getElementById('saleQty').value;
-            if (!qty || qty <= 0) {
-                document.getElementById('saleMsg').innerHTML = '<div class="error">⚠️ Quantité valide requise</div>';
-                return;
-            }
-            try {
-                await apiCall(`/api/sales/report?product_id=${productId}&quantite=${qty}`, { method: 'POST' });
-                document.getElementById('saleMsg').innerHTML = '<div class="success">✅ Vente enregistrée</div>';
-                setTimeout(() => location.reload(), 1500);
-            } catch(e) {
-                document.getElementById('saleMsg').innerHTML = `<div class="error">❌ ${e.message}</div>`;
-            }
-        }
-        
-        async function updateStock(id) {
-            const entree = document.getElementById(`entree_${id}`).value || 0;
-            const sortie = document.getElementById(`sortie_${id}`).value || 0;
-            try {
-                await apiCall(`/api/stock/movement?product_id=${id}&quantite_entree=${entree}&quantite_sortie=${sortie}`, { method: 'POST' });
-                location.reload();
-            } catch(e) {
-                alert('Erreur: ' + e.message);
-            }
-        }
-        
-        async function validateTx(id, action) {
-            try {
-                await apiCall(`/api/transactions/validate/${id}?action=${action}`, { method: 'POST' });
-                location.reload();
-            } catch(e) {
-                alert('Erreur: ' + e.message);
-            }
-        }
-        
-        async function comptableView() {
-            let finance = { total_entrees: 0, total_sorties: 0, solde: 0, transactions: [] };
-            try { finance = await apiCall('/api/transactions/dashboard'); } catch(e) {}
-            return `
-                <div class="card"><h3>💰 Finances</h3>
-                    <div class="stats">
-                        <div class="stat-card"><h4>Entrées</h4><p>${finance.total_entrees.toLocaleString()} ${CURRENCY}</p></div>
-                        <div class="stat-card"><h4>Sorties</h4><p>${finance.total_sorties.toLocaleString()} ${CURRENCY}</p></div>
-                        <div class="stat-card"><h4>Solde</h4><p>${finance.solde.toLocaleString()} ${CURRENCY}</p></div>
-                    </div>
-                </div>
-                <div class="card"><h3>📝 Nouvelle transaction</h3>
-                    <select id="txType"><option value="entree">📥 Entrée (Revenu)</option><option value="sortie">📤 Sortie (Dépense - besoin approbation)</option></select>
-                    <input type="number" id="txMontant" placeholder="Montant (${CURRENCY})">
-                    <input type="text" id="txLibelle" placeholder="Libellé">
-                    <button onclick="createTransaction()">💾 Enregistrer</button>
-                    <div id="txMsg"></div>
-                </div>
-                <div class="card"><h3>📋 Historique</h3>
-                    ${finance.transactions.length === 0 ? '<div class="empty">📭 Aucune transaction</div>' : `
-                        <div class="table-wrapper"><table><thead><tr><th>Date</th><th>Type</th><th>Montant</th><th>Statut</th></tr></thead>
-                        <tbody>${finance.transactions.slice(0, 20).map(t => `<tr><td>${new Date(t.date).toLocaleDateString()}</td><td>${t.type === 'entree' ? '📥' : '📤'}</td><td>${t.montant.toLocaleString()} ${CURRENCY}</td><td>${t.statut}</td>`).join('')}</tbody></table></div>
-                    `}
-                </div>
-                <div class="card"><h3>📊 Télécharger PDF</h3><button class="btn-pdf" onclick="downloadPDF('transactions')">📄 Télécharger PDF</button></div>
-            `;
-        }
-        
-        async function dafView() {
-            let finance = { total_entrees: 0, total_sorties: 0, solde: 0 };
-            let pending = [];
-            try { finance = await apiCall('/api/transactions/dashboard'); } catch(e) {}
-            try { pending = await apiCall('/api/transactions/pending'); } catch(e) {}
-            return `
-                <div class="card"><h3>💰 Finances</h3>
-                    <div class="stats">
-                        <div class="stat-card"><h4>Entrées</h4><p>${finance.total_entrees.toLocaleString()} ${CURRENCY}</p></div>
-                        <div class="stat-card"><h4>Sorties</h4><p>${finance.total_sorties.toLocaleString()} ${CURRENCY}</p></div>
-                        <div class="stat-card"><h4>Solde</h4><p>${finance.solde.toLocaleString()} ${CURRENCY}</p></div>
-                    </div>
-                </div>
-                <div class="card"><h3>⏳ Validations</h3>
-                    ${pending.length === 0 ? '<div class="empty">✅ Aucune validation</div>' : pending.map(p => `
-                        <div class="pending-card"><b>${p.libelle}</b><br>💰 ${p.montant.toLocaleString()} ${CURRENCY}<br>
-                        <div class="flex"><button class="btn-approve" onclick="validateTx(${p.id}, 'APPROUVE')">✅ Approuver</button><button class="btn-reject" onclick="validateTx(${p.id}, 'REJETE')">❌ Rejeter</button></div></div>
-                    `).join('')}
-                </div>
-                <div class="card"><h3>📊 PDF</h3><button class="btn-pdf" onclick="downloadPDF('financial')">📄 Télécharger PDF</button></div>
-            `;
-        }
-        
-        async function dtView() {
-            let products = [], stockReports = [];
-            try { products = await apiCall('/api/products/'); } catch(e) {}
-            try { stockReports = await apiCall('/api/stock/reports/all'); } catch(e) {}
-            return `
-                <div class="card"><h3>📋 Produits</h3>${products.length === 0 ? '<div class="empty">📭 Aucun</div>' : products.map(p => `<div class="product-item"><b>${p.nom}</b> - ${p.prix_unitaire.toLocaleString()} ${CURRENCY}</div>`).join('')}</div>
-                <div class="card"><h3>📦 Stock</h3>${stockReports.length === 0 ? '<div class="empty">📭 Aucun mouvement</div>' : `<div class="table-wrapper"><tr><thead><tr><th>Date</th><th>Produit</th><th>Entrée</th><th>Sortie</th><th>Disponible</th></tr></thead><tbody>${stockReports.map(r => `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td>${r.product}</td><td>${r.quantite_entree}</td><td>${r.quantite_sortie}</td><td>${r.quantite_disponible}</td>`).join('')}</tbody></table></div>`}</div>
-                <div class="card"><h3>📊 PDF</h3><button class="btn-pdf" onclick="downloadPDF('stock')">📄 Télécharger PDF</button></div>
-            `;
-        }
-        
-        async function dcView() {
-            let products = [], sales = [], revenue = { total_revenue: 0 };
-            try { products = await apiCall('/api/products/'); } catch(e) {}
-            try { sales = await apiCall('/api/sales/all-reports'); } catch(e) {}
-            try { revenue = await apiCall('/api/sales/total-revenue'); } catch(e) {}
-            return `
-                <div class="card"><h3>💰 CA Total</h3><div class="stat-card"><p>${revenue.total_revenue.toLocaleString()} ${CURRENCY}</p></div></div>
-                <div class="card"><h3>📦 Produits</h3><div class="flex"><input type="text" id="newProductDC" placeholder="Nom" style="flex:2"><input type="number" id="newPriceDC" placeholder="Prix" style="flex:1"><button onclick="createProductDC()" style="flex:1">➕ Ajouter</button></div><div id="productMsgDC"></div>${products.length === 0 ? '<div class="empty">📭 Aucun</div>' : `<div class="table-wrapper"><table><thead><tr><th>Produit</th><th>Prix</th></tr></thead><tbody>${products.map(p => `<tr><td>${p.nom}</td><td>${p.prix_unitaire.toLocaleString()} ${CURRENCY}</td>`).join('')}</tbody></table></div>`}</div>
-                <div class="card"><h3>📋 Ventes</h3>${sales.length === 0 ? '<div class="empty">📭 Aucune vente</div>' : `<div class="table-wrapper"><tr><thead><tr><th>Date</th><th>Agent</th><th>Produit</th><th>Qté</th><th>Total</th></tr></thead><tbody>${sales.map(s => `<tr><td>${new Date(s.date).toLocaleDateString()}</td><td>${s.agent}</td><td>${s.product}</td><td>${s.quantite}</td><td>${s.montant_total.toLocaleString()} ${CURRENCY}</td>`).join('')}</tbody></table></div>`}</div>
-                <div class="card"><h3>📊 PDF</h3><button class="btn-pdf" onclick="downloadPDF('sales')">📄 Télécharger PDF</button></div>
-            `;
-        }
-        
-        async function stockView() {
-            let products = [], stockData = [];
-            try { products = await apiCall('/api/products/'); } catch(e) {}
-            try { stockData = await apiCall('/api/stock/current'); } catch(e) {}
-            return `<div class="card"><h3>📦 Gestion des stocks</h3>${products.length === 0 ? '<div class="empty">📭 Aucun produit</div>' : products.map(p => { let s = stockData.find(s => s.product_id === p.id) || { quantite_disponible: 0 }; return `<div class="product-item"><b>${p.nom}</b> - ${p.prix_unitaire.toLocaleString()} ${CURRENCY}<br>📦 Stock: <b>${s.quantite_disponible}</b><br><div class="flex"><input type="number" id="entree_${p.id}" placeholder="Entrée" style="width:30%"><input type="number" id="sortie_${p.id}" placeholder="Sortie" style="width:30%"><button class="btn-small" onclick="updateStock(${p.id})">✓ Mettre à jour</button></div></div>`; }).join('')}</div>`;
-        }
-        
-        async function commercialView() {
-            let products = [], revenue = { total_revenue: 0 }, reports = [];
-            try { products = await apiCall('/api/products/'); } catch(e) {}
-            try { revenue = await apiCall('/api/sales/total-revenue'); } catch(e) {}
-            try { reports = await apiCall('/api/sales/my-reports'); } catch(e) {}
-            return `
-                <div class="card"><h3>💰 Mes ventes</h3><div class="stat-card"><p>${revenue.total_revenue.toLocaleString()} ${CURRENCY}</p></div></div>
-                <div class="card"><h3>📝 Nouvelle vente</h3><select id="productSelect">${products.map(p => `<option value="${p.id}">${p.nom} - ${p.prix_unitaire.toLocaleString()} ${CURRENCY}</option>`).join('')}</select><input type="number" id="saleQty" placeholder="Quantité"><button onclick="createSale()">💾 Enregistrer</button><div id="saleMsg"></div></div>
-                <div class="card"><h3>📋 Mes ventes</h3>${reports.length === 0 ? '<div class="empty">📭 Aucune vente</div>' : `<div class="table-wrapper"><tr><thead><tr><th>Date</th><th>Produit</th><th>Quantité</th><th>Total</th></tr></thead><tbody>${reports.map(r => `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td>${r.product}</td><td>${r.quantite}</td><td>${r.montant_total.toLocaleString()} ${CURRENCY}</td>`).join('')}</tbody></table></div>`}</div>
-            `;
-        }
-        
-        function downloadPDF(type) {
-            window.open(API + `/api/reports/${type}`, '_blank');
-        }
-        
-        function logout() {
-            localStorage.clear();
-            window.location.href = '/';
-        }
-        
-        load();
+        loadDashboard();
     </script>
 </body>
 </html>

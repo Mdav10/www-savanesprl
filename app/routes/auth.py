@@ -1,65 +1,34 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import User, RoleEnum
-from app.utils import verify_password, get_password_hash, create_access_token
-from app.schemas import UserLogin, TokenResponse
-from app.deps import get_current_user
+from app.models import User
+from app.utils import verify_password, get_password_hash, create_token
 import os
 
-router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+router = APIRouter(prefix="/api/auth")
 
-DG_USERNAME = os.getenv("DG_USERNAME", "OsiasHab")
-DG_PASSWORD = os.getenv("DG_PASSWORD", "08800Osi")
+DG_USERNAME = "OsiasHab"
+DG_PASSWORD = "08800Osi"
 
-def create_default_dg(db: Session):
-    try:
-        dg_user = db.query(User).filter(User.username == DG_USERNAME).first()
-        if not dg_user:
-            dg = User(
-                nom="Directeur General",
-                email="dg@savanesprl.com",
-                username=DG_USERNAME,
-                mot_de_passe=get_password_hash(DG_PASSWORD),
-                role_id=RoleEnum.DG,
-                is_active=True
-            )
-            db.add(dg)
-            db.commit()
-            print("✅ DG created")
-    except Exception as e:
-        print(f"Error: {e}")
-        db.rollback()
+def init_dg(db: Session):
+    if not db.query(User).filter(User.username == DG_USERNAME).first():
+        db.add(User(
+            nom="Directeur General",
+            email="dg@savane.com",
+            username=DG_USERNAME,
+            mot_de_passe=get_password_hash(DG_PASSWORD),
+            role="DG"
+        ))
+        db.commit()
 
 @router.post("/login")
-def login(user_data: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == user_data.username).first()
-    
-    if not user or not verify_password(user_data.mot_de_passe, user.mot_de_passe):
+def login(username: str, mot_de_passe: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == username).first()
+    if not user or not verify_password(mot_de_passe, user.mot_de_passe):
         raise HTTPException(status_code=401, detail="Identifiants incorrects")
     
-    if not user.is_active:
-        raise HTTPException(status_code=401, detail="Compte désactivé")
-    
-    token = create_access_token({"user_id": user.id, "role": user.role_id})
-    
     return {
-        "access_token": token,
-        "token_type": "bearer",
-        "user_id": user.id,
-        "nom": user.nom,
-        "role": user.role_id
-    }
-
-@router.post("/logout")
-def logout():
-    return {"message": "Déconnecté"}
-
-@router.get("/me")
-def get_me(current_user = Depends(get_current_user)):
-    return {
-        "id": current_user.id,
-        "nom": current_user.nom,
-        "role": current_user.role_id,
-        "is_active": current_user.is_active
+        "access_token": create_token({"user_id": user.id, "role": user.role}),
+        "role": user.role,
+        "nom": user.nom
     }

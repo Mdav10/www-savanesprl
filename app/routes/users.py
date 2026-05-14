@@ -2,28 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
-from app.deps import get_current_user, role_required
+from app.auth import get_current_user
 from app.utils import get_password_hash
 
-router = APIRouter(prefix="/api/users", tags=["Users"])
+router = APIRouter(prefix="/api/users")
 
 @router.get("/")
-def get_all_users(
-    current_user = Depends(role_required(["DG"])),
-    db: Session = Depends(get_db)
-):
-    users = db.query(User).all()
-    return [
-        {
-            "id": u.id,
-            "nom": u.nom,
-            "username": u.username,
-            "email": u.email,
-            "role": u.role_id,
-            "is_active": u.is_active
-        }
-        for u in users
-    ]
+def get_users(current_user = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.role != "DG":
+        raise HTTPException(status_code=403, detail="Permission refusée")
+    return db.query(User).all()
 
 @router.post("/create")
 def create_user(
@@ -32,35 +20,23 @@ def create_user(
     username: str,
     mot_de_passe: str,
     role: str,
-    current_user = Depends(role_required(["DG"])),
+    current_user = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    if not nom or not email or not username or not mot_de_passe:
-        raise HTTPException(status_code=400, detail="Tous les champs sont requis")
+    if current_user.role != "DG":
+        raise HTTPException(status_code=403, detail="Permission refusée")
     
-    existing_username = db.query(User).filter(User.username == username).first()
-    if existing_username:
-        raise HTTPException(status_code=400, detail="Ce nom d'utilisateur est déjà pris")
+    if db.query(User).filter(User.username == username).first():
+        raise HTTPException(status_code=400, detail="Nom d'utilisateur déjà pris")
     
-    valid_roles = ["DT", "DAF", "DIRECTEUR_COMMERCIAL", "COMPTABLE", "AGENT_STOCK", "AGENT_COMMERCIAL"]
-    if role not in valid_roles:
-        raise HTTPException(status_code=400, detail="Rôle invalide")
-    
-    if len(mot_de_passe) < 4:
-        raise HTTPException(status_code=400, detail="Le mot de passe doit avoir au moins 4 caractères")
-    
-    hashed = get_password_hash(mot_de_passe)
     new_user = User(
         nom=nom,
         email=email,
         username=username,
-        mot_de_passe=hashed,
-        role_id=role,
-        is_active=True
+        mot_de_passe=get_password_hash(mot_de_passe),
+        role=role
     )
-    
     db.add(new_user)
     db.commit()
-    db.refresh(new_user)
     
-    return {"message": "Utilisateur créé avec succès", "user_id": new_user.id, "username": username}
+    return {"message": "Utilisateur créé", "user": {"id": new_user.id, "nom": new_user.nom, "username": new_user.username, "role": new_user.role}}
