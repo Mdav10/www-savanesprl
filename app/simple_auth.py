@@ -1,17 +1,9 @@
-from passlib.context import CryptContext
-from datetime import datetime, timedelta
-import secrets
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def verify_password(plain, hashed):
-    return pwd_context.verify(plain, hashed)
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-# Simple token functions (no JWT)
+# Simple authentication WITHOUT JWT - for local testing only
 import hashlib
+import secrets
+from datetime import datetime, timedelta
+
+# Simple token storage (in memory - for testing only)
 tokens = {}
 
 def create_token(data: dict):

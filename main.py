@@ -4,19 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from app.database import engine, Base, SessionLocal
 from app.routes.auth import init_dg
-from app.fix_db import fix_database
-from app.fix_enum import fix_enum_values
 
-# Fix database schema
-fix_database()
-
-# Fix ENUM values - add AGENT_STOCK, AGENT_COMMERCIAL, etc.
-try:
-    fix_enum_values()
-except Exception as e:
-    print(f"Enum fix note: {e}")
-
-# Create tables if they don't exist
+# Create tables
 Base.metadata.create_all(bind=engine)
 
 # Initialize DG user
@@ -35,12 +24,13 @@ app.add_middleware(
 )
 
 # Import routes
-from app.routes import auth, users, transactions, products
+from app.routes import auth, users, transactions, products, fix_db_route
 
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(transactions.router)
 app.include_router(products.router)
+app.include_router(fix_db_route.router)
 
 @app.get("/")
 def root():
