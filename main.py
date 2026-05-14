@@ -5,8 +5,10 @@ from fastapi.responses import FileResponse
 from app.database import engine, Base, SessionLocal
 from app.routes.auth import init_dg
 
+# Create tables
 Base.metadata.create_all(bind=engine)
 
+# Initialize DG
 db = SessionLocal()
 init_dg(db)
 db.close()
@@ -21,14 +23,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.routes import auth, users, transactions
+# Import routes
+from app.routes import auth, users, transactions, migrate
+
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(transactions.router)
+app.include_router(migrate.router)
 
 @app.get("/")
 def root():
-    return {"message": "SavaneSPRL API", "status": "running"}
+    return FileResponse("static/index.html")
+
+@app.get("/dashboard")
+def dashboard():
+    return FileResponse("static/dashboard.html")
 
 if __name__ == "__main__":
     import uvicorn
