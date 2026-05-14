@@ -9,10 +9,10 @@ router = APIRouter(prefix="/api/users", tags=["users"])
 
 @router.get("/")
 def get_users(current_user = Depends(get_current_user), db: Session = Depends(get_db)):
-    if current_user.role != "DG":
+    if current_user.role_id != "DG":
         raise HTTPException(status_code=403, detail="Permission refusée")
     users = db.query(User).all()
-    return [{"id": u.id, "nom": u.nom, "username": u.username, "email": u.email, "role": u.role} for u in users]
+    return [{"id": u.id, "nom": u.nom, "username": u.username, "email": u.email, "role": u.role_id} for u in users]
 
 @router.post("/create")
 def create_user(
@@ -25,7 +25,7 @@ def create_user(
     db: Session = Depends(get_db)
 ):
     try:
-        if current_user.role != "DG":
+        if current_user.role_id != "DG":
             raise HTTPException(status_code=403, detail="Permission refusée")
         
         if not nom or not email or not username or not mot_de_passe:
@@ -41,7 +41,7 @@ def create_user(
             email=email,
             username=username,
             mot_de_passe=hashed_password,
-            role=role,
+            role_id=role,
             is_active=True
         )
         
@@ -55,7 +55,7 @@ def create_user(
                 "id": new_user.id, 
                 "nom": new_user.nom, 
                 "username": new_user.username, 
-                "role": new_user.role
+                "role": new_user.role_id
             }
         }
     except Exception as e:
@@ -70,7 +70,7 @@ def delete_user(
     db: Session = Depends(get_db)
 ):
     """Delete a user - Only DG can delete users"""
-    if current_user.role != "DG":
+    if current_user.role_id != "DG":
         raise HTTPException(status_code=403, detail="Permission refusée")
     
     # Prevent deleting yourself
@@ -92,7 +92,7 @@ def delete_all_test_users(
     db: Session = Depends(get_db)
 ):
     """Delete all users except DG - Clean up test users"""
-    if current_user.role != "DG":
+    if current_user.role_id != "DG":
         raise HTTPException(status_code=403, detail="Permission refusée")
     
     # Delete all users except the current DG
