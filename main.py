@@ -28,12 +28,13 @@ app.add_middleware(
 )
 
 # Import all routes
-from app.routes import auth, users, transactions, products
+from app.routes import auth, users, transactions, products, debug
 
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(transactions.router)
 app.include_router(products.router)
+app.include_router(debug.router)
 
 @app.get("/")
 def root():
