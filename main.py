@@ -7,18 +7,15 @@ from app.database import engine, Base, SessionLocal
 from app.routes import auth, users, products, stock, sales, transactions, reports
 from app.routes.auth import create_default_dg
 
+# Create tables
 Base.metadata.create_all(bind=engine)
 
+# Create default DG
 db = SessionLocal()
-try:
-    create_default_dg(db)
-    db.commit()
-except:
-    db.rollback()
-finally:
-    db.close()
+create_default_dg(db)
+db.close()
 
-app = FastAPI(title="SavaneSPRL API", version="2.0.0")
+app = FastAPI(title="SavaneSPRL")
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,6 +25,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Serve static files
+os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
@@ -38,6 +37,7 @@ async def root():
 async def dashboard():
     return FileResponse("static/dashboard.html")
 
+# API routes
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(products.router)

@@ -1,11 +1,10 @@
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
-import secrets
 import os
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret_key_change_me")
+SECRET_KEY = os.getenv("SECRET_KEY", "savanes_secret_key_2024")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 480
 
@@ -26,6 +25,3 @@ def decode_token(token: str):
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
         return None
-
-def generate_session_token():
-    return secrets.token_urlsafe(32)

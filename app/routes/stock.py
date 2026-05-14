@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func
-from datetime import datetime
 from app.database import get_db
-from app.models import StockMovement, Product, User, ActiviteLog
+from app.models import StockMovement, Product
 from app.auth import get_current_user, role_required
 
 router = APIRouter(prefix="/api/stock", tags=["Stock"])
@@ -21,27 +19,24 @@ def create_stock_movement(
         raise HTTPException(status_code=404, detail="Produit non trouvé")
     
     # Get last available quantity
-    last_movement = db.query(StockMovement).filter(
+    last = db.query(StockMovement).filter(
         StockMovement.product_id == product_id
     ).order_by(StockMovement.date.desc()).first()
     
-    previous_disponible = last_movement.quantite_disponible if last_movement else 0
-    new_disponible = previous_disponible + int(quantite_entree) - int(quantite_sortie)
+    previous = last.quantite_disponible if last else 0
+    new_disponible = previous + quantite_entree - quantite_sortie
     
     movement = StockMovement(
         product_id=product_id,
-        quantite_entree=int(quantite_entree),
-        quantite_sortie=int(quantite_sortie),
+        quantite_entree=quantite_entree,
+        quantite_sortie=quantite_sortie,
         quantite_disponible=new_disponible,
         agent_id=current_user.id
     )
     db.add(movement)
     db.commit()
     
-    return {
-        "message": "Mouvement enregistré",
-        "quantite_disponible": new_disponible
-    }
+    return {"message": "Mouvement enregistré", "quantite_disponible": new_disponible}
 
 @router.get("/current")
 def get_current_stock(
@@ -50,19 +45,16 @@ def get_current_stock(
 ):
     products = db.query(Product).all()
     result = []
-    
-    for product in products:
-        last_movement = db.query(StockMovement).filter(
-            StockMovement.product_id == product.id
+    for p in products:
+        last = db.query(StockMovement).filter(
+            StockMovement.product_id == p.id
         ).order_by(StockMovement.date.desc()).first()
-        
         result.append({
-            "product_id": product.id,
-            "product_nom": product.nom,
-            "prix_unitaire": product.prix_unitaire,
-            "quantite_disponible": last_movement.quantite_disponible if last_movement else 0,
+            "product_id": p.id,
+            "product_nom": p.nom,
+            "prix_unitaire": p.prix_unitaire,
+            "quantite_disponible": last.quantite_disponible if last else 0
         })
-    
     return result
 
 @router.get("/reports/all")
@@ -79,6 +71,6 @@ def get_all_stock_reports(
             "product": product.nom if product else "Inconnu",
             "quantite_entree": m.quantite_entree,
             "quantite_sortie": m.quantite_sortie,
-            "quantite_disponible": m.quantite_disponible,
+            "quantite_disponible": m.quantite_disponible
         })
     return result

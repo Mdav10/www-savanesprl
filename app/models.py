@@ -30,7 +30,6 @@ class User(Base):
     mot_de_passe = Column(String, nullable=False)
     role_id = Column(Enum(RoleEnum), nullable=False)
     is_active = Column(Boolean, default=True)
-    session_token = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Product(Base):
@@ -38,7 +37,6 @@ class Product(Base):
     id = Column(Integer, primary_key=True, index=True)
     nom = Column(String, nullable=False)
     prix_unitaire = Column(Float, nullable=False)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class StockMovement(Base):
@@ -77,5 +75,4 @@ class ActiviteLog(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     action = Column(String, nullable=False)
     details = Column(Text, nullable=True)
-    ip_address = Column(String, nullable=True)
     date = Column(DateTime, default=datetime.utcnow)

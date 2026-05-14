@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import User, ActiviteLog, RoleEnum
+from app.models import User, RoleEnum
 from app.auth import get_current_user, role_required
 from app.utils import get_password_hash
 
@@ -35,11 +35,14 @@ def create_user(
     current_user = Depends(role_required(["DG"])),
     db: Session = Depends(get_db)
 ):
+    # Check if user exists
     existing = db.query(User).filter((User.email == email) | (User.username == username)).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email ou nom d'utilisateur déjà utilisé")
     
-    if role not in [r.value for r in RoleEnum]:
+    # Check if role is valid
+    valid_roles = ["DT", "DAF", "DIRECTEUR_COMMERCIAL", "COMPTABLE", "AGENT_STOCK", "AGENT_COMMERCIAL"]
+    if role not in valid_roles:
         raise HTTPException(status_code=400, detail="Rôle invalide")
     
     hashed = get_password_hash(mot_de_passe)
@@ -54,36 +57,3 @@ def create_user(
     db.commit()
     
     return {"message": "Utilisateur créé", "user_id": new_user.id}
-
-@router.post("/disable/{user_id}")
-def disable_user(
-    user_id: int,
-    current_user = Depends(role_required(["DG"])),
-    db: Session = Depends(get_db)
-):
-    if user_id == current_user.id:
-        raise HTTPException(status_code=400, detail="Impossible de se désactiver soi-même")
-    
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
-    
-    user.is_active = False
-    db.commit()
-    
-    return {"message": f"Utilisateur {user.nom} désactivé"}
-
-@router.post("/enable/{user_id}")
-def enable_user(
-    user_id: int,
-    current_user = Depends(role_required(["DG"])),
-    db: Session = Depends(get_db)
-):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
-    
-    user.is_active = True
-    db.commit()
-    
-    return {"message": f"Utilisateur {user.nom} réactivé"}
