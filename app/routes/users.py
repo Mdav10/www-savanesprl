@@ -35,7 +35,11 @@ def create_user(
     current_user = Depends(role_required(["DG"])),
     db: Session = Depends(get_db)
 ):
-    # Check if username already exists (only username must be unique)
+    # Validate inputs
+    if not nom or not email or not username or not mot_de_passe:
+        raise HTTPException(status_code=400, detail="Tous les champs sont requis")
+    
+    # Check if username already exists
     existing_username = db.query(User).filter(User.username == username).first()
     if existing_username:
         raise HTTPException(status_code=400, detail="Ce nom d'utilisateur est déjà pris")
@@ -45,11 +49,11 @@ def create_user(
     if role not in valid_roles:
         raise HTTPException(status_code=400, detail="Rôle invalide")
     
-    # Validate password length
+    # Validate password
     if len(mot_de_passe) < 4:
         raise HTTPException(status_code=400, detail="Le mot de passe doit avoir au moins 4 caractères")
     
-    # Create user (email can be duplicate - no check)
+    # Create user
     hashed = get_password_hash(mot_de_passe)
     new_user = User(
         nom=nom,
@@ -59,8 +63,13 @@ def create_user(
         role_id=role,
         is_active=True
     )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    
+    try:
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erreur base de données: {str(e)}")
     
     return {"message": "Utilisateur créé avec succès", "user_id": new_user.id, "username": username}

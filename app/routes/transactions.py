@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
 from app.database import get_db
 from app.models import Transaction, TransactionStatus, TransactionType
 from app.auth import get_current_user, role_required
@@ -89,27 +89,18 @@ def get_dashboard(
     current_user = Depends(role_required(["DG", "DAF", "COMPTABLE"])),
     db: Session = Depends(get_db)
 ):
-    # Get ONLY transactions created after today (or empty)
-    # This ensures no fake old data
-    from datetime import datetime, timedelta
-    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    
     total_entrees = db.query(func.sum(Transaction.montant)).filter(
-        Transaction.type == "entree",
-        Transaction.date >= today
+        Transaction.type == "entree"
     ).scalar() or 0
     
     total_sorties = db.query(func.sum(Transaction.montant)).filter(
         Transaction.type == "sortie",
-        Transaction.statut == TransactionStatus.APPROUVE,
-        Transaction.date >= today
+        Transaction.statut == TransactionStatus.APPROUVE
     ).scalar() or 0
     
     solde = total_entrees - total_sorties
     
-    transactions = db.query(Transaction).filter(
-        Transaction.date >= today
-    ).order_by(Transaction.date.desc()).limit(100).all()
+    transactions = db.query(Transaction).order_by(Transaction.date.desc()).limit(100).all()
     
     return {
         "total_entrees": total_entrees,
@@ -127,3 +118,13 @@ def get_dashboard(
             for t in transactions
         ]
     }
+
+@router.post("/reset")
+def reset_transactions(
+    current_user = Depends(role_required(["DG"])),
+    db: Session = Depends(get_db)
+):
+    """DELETE ALL TRANSACTIONS - Use this to clear fake data"""
+    deleted = db.query(Transaction).delete()
+    db.commit()
+    return {"message": f"✅ {deleted} transactions supprimées", "deleted_count": deleted}

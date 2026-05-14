@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, RoleEnum
 from app.utils import verify_password, get_password_hash, create_access_token
 from app.schemas import UserLogin, TokenResponse
-from app.auth import get_current_user
 import os
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
@@ -13,25 +12,34 @@ DG_USERNAME = os.getenv("DG_USERNAME", "OsiasHab")
 DG_PASSWORD = os.getenv("DG_PASSWORD", "08800Osi")
 
 def create_default_dg(db: Session):
-    dg_user = db.query(User).filter(User.username == DG_USERNAME).first()
-    if not dg_user:
-        dg = User(
-            nom="Directeur General",
-            email="dg@savanesprl.com",
-            username=DG_USERNAME,
-            mot_de_passe=get_password_hash(DG_PASSWORD),
-            role_id=RoleEnum.DG,
-            is_active=True
-        )
-        db.add(dg)
-        db.commit()
-        print("✅ DG created")
+    try:
+        dg_user = db.query(User).filter(User.username == DG_USERNAME).first()
+        if not dg_user:
+            dg = User(
+                nom="Directeur General",
+                email="dg@savanesprl.com",
+                username=DG_USERNAME,
+                mot_de_passe=get_password_hash(DG_PASSWORD),
+                role_id=RoleEnum.DG,
+                is_active=True
+            )
+            db.add(dg)
+            db.commit()
+            print("✅ DG created")
+        else:
+            print("✅ DG already exists")
+    except Exception as e:
+        print(f"Error creating DG: {e}")
+        db.rollback()
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login")
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == user_data.username).first()
     
-    if not user or not verify_password(user_data.mot_de_passe, user.mot_de_passe):
+    if not user:
+        raise HTTPException(status_code=401, detail="Identifiants incorrects")
+    
+    if not verify_password(user_data.mot_de_passe, user.mot_de_passe):
         raise HTTPException(status_code=401, detail="Identifiants incorrects")
     
     if not user.is_active:
@@ -59,3 +67,6 @@ def get_me(current_user: User = Depends(get_current_user)):
         "role": current_user.role_id,
         "is_active": current_user.is_active
     }
+
+# Import at the end to avoid circular import
+from app.auth import get_current_user
