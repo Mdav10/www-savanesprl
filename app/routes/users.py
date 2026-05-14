@@ -35,35 +35,29 @@ def create_user(
     current_user = Depends(role_required(["DG"])),
     db: Session = Depends(get_db)
 ):
-    # Check if email already exists
-    existing_email = db.query(User).filter(User.email == email).first()
-    if existing_email:
-        raise HTTPException(status_code=400, detail="Cet email est déjà utilisé")
-    
-    # Check if username already exists
+    # Check if username already exists (only username must be unique)
     existing_username = db.query(User).filter(User.username == username).first()
     if existing_username:
         raise HTTPException(status_code=400, detail="Ce nom d'utilisateur est déjà pris")
     
-    # Validate email format
-    import re
-    if not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
-        raise HTTPException(status_code=400, detail="Email invalide")
-    
+    # Validate role
     valid_roles = ["DT", "DAF", "DIRECTEUR_COMMERCIAL", "COMPTABLE", "AGENT_STOCK", "AGENT_COMMERCIAL"]
     if role not in valid_roles:
         raise HTTPException(status_code=400, detail="Rôle invalide")
     
+    # Validate password length
     if len(mot_de_passe) < 4:
         raise HTTPException(status_code=400, detail="Le mot de passe doit avoir au moins 4 caractères")
     
+    # Create user (email can be duplicate - no check)
     hashed = get_password_hash(mot_de_passe)
     new_user = User(
         nom=nom,
         email=email,
         username=username,
         mot_de_passe=hashed,
-        role_id=role
+        role_id=role,
+        is_active=True
     )
     db.add(new_user)
     db.commit()

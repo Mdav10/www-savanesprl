@@ -25,7 +25,7 @@ class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     nom = Column(String, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
+    email = Column(String, nullable=False)  # Removed unique=True
     username = Column(String, unique=True, index=True, nullable=False)
     mot_de_passe = Column(String, nullable=False)
     role_id = Column(Enum(RoleEnum), nullable=False)
