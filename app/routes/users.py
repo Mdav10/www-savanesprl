@@ -31,7 +31,6 @@ def create_user(
         print(f"Email: {email}")
         print(f"Username: {username}")
         print(f"Role: {role}")
-        print(f"Current user: {current_user.id} - {current_user.role}")
         
         # Check permission
         if current_user.role != "DG":
@@ -46,14 +45,14 @@ def create_user(
         if existing:
             raise HTTPException(status_code=400, detail="Nom d'utilisateur déjà pris")
         
-        # Create new user
+        # Create new user - IMPORTANT: role must be set properly
         hashed_password = get_password_hash(mot_de_passe)
         new_user = User(
             nom=nom,
             email=email,
             username=username,
             mot_de_passe=hashed_password,
-            role=role,
+            role=role,  # This saves the role
             is_active=True
         )
         
@@ -61,7 +60,7 @@ def create_user(
         db.commit()
         db.refresh(new_user)
         
-        print(f"✅ User created with ID: {new_user.id}")
+        print(f"✅ User created with ID: {new_user.id}, Role: {new_user.role}")
         
         return {
             "message": "Utilisateur créé avec succès", 
