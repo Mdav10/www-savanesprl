@@ -11,7 +11,8 @@ router = APIRouter(prefix="/api/users")
 def get_users(current_user = Depends(get_current_user), db: Session = Depends(get_db)):
     if current_user.role != "DG":
         raise HTTPException(status_code=403, detail="Permission refusée")
-    return db.query(User).all()
+    users = db.query(User).all()
+    return [{"id": u.id, "nom": u.nom, "username": u.username, "email": u.email, "role": u.role} for u in users]
 
 @router.post("/create")
 def create_user(

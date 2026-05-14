@@ -20,6 +20,7 @@ def init_dg(db: Session):
             role="DG"
         ))
         db.commit()
+        print("✅ DG created")
 
 @router.post("/login")
 def login(username: str, mot_de_passe: str, db: Session = Depends(get_db)):

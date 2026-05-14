@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean
 from datetime import datetime
 from app.database import Base
 
@@ -9,7 +9,7 @@ class User(Base):
     email = Column(String, nullable=False)
     username = Column(String, unique=True, index=True, nullable=False)
     mot_de_passe = Column(String, nullable=False)
-    role = Column(String, nullable=False)
+    role = Column(String, nullable=False)  # Changed from role_id to role
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
