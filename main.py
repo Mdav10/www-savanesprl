@@ -4,11 +4,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from app.database import engine, Base, SessionLocal
 from app.routes.auth import init_dg
+from app.fix_db import fix_database
 
-# Create tables
+# Fix database schema first
+fix_database()
+
+# Create tables if they don't exist
 Base.metadata.create_all(bind=engine)
 
-# Initialize DG
+# Initialize DG user
 db = SessionLocal()
 init_dg(db)
 db.close()
@@ -23,13 +27,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Import routes
-from app.routes import auth, users, transactions, migrate
-
+from app.routes import auth, users, transactions
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(transactions.router)
-app.include_router(migrate.router)
 
 @app.get("/")
 def root():
