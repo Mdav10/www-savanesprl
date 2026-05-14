@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Product
-from app.auth import get_current_user, role_required
+from app.deps import get_current_user, role_required
 
 router = APIRouter(prefix="/api/products", tags=["Products"])
 
@@ -31,10 +31,7 @@ def create_product(
     if prix_unitaire <= 0:
         raise HTTPException(status_code=400, detail="Le prix doit être positif")
     
-    product = Product(
-        nom=nom,
-        prix_unitaire=prix_unitaire
-    )
+    product = Product(nom=nom, prix_unitaire=prix_unitaire)
     db.add(product)
     db.commit()
     

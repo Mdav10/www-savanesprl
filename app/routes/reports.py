@@ -9,7 +9,7 @@ from io import BytesIO
 from datetime import datetime
 from app.database import get_db
 from app.models import Transaction, SaleReport, StockMovement, Product, User
-from app.auth import get_current_user, role_required
+from app.deps import get_current_user, role_required
 
 router = APIRouter(prefix="/api/reports", tags=["Reports"])
 

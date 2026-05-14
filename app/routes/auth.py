@@ -4,6 +4,7 @@ from app.database import get_db
 from app.models import User, RoleEnum
 from app.utils import verify_password, get_password_hash, create_access_token
 from app.schemas import UserLogin, TokenResponse
+from app.deps import get_current_user
 import os
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
@@ -55,13 +56,10 @@ def logout():
     return {"message": "Déconnecté"}
 
 @router.get("/me")
-def get_me(current_user = Depends(get_current_user_from_auth)):
+def get_me(current_user = Depends(get_current_user)):
     return {
         "id": current_user.id,
         "nom": current_user.nom,
         "role": current_user.role_id,
         "is_active": current_user.is_active
     }
-
-# Import here to avoid circular import
-from app.auth import get_current_user as get_current_user_from_auth

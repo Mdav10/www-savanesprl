@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func, text
+from sqlalchemy import func
 from app.database import get_db
 from app.models import Transaction, TransactionStatus, TransactionType
-from app.auth import get_current_user, role_required
+from app.deps import get_current_user, role_required
 
 router = APIRouter(prefix="/api/transactions", tags=["Transactions"])
 
@@ -124,7 +124,6 @@ def reset_transactions(
     current_user = Depends(role_required(["DG"])),
     db: Session = Depends(get_db)
 ):
-    """DELETE ALL TRANSACTIONS - Use this to clear fake data"""
     deleted = db.query(Transaction).delete()
     db.commit()
     return {"message": f"✅ {deleted} transactions supprimées", "deleted_count": deleted}

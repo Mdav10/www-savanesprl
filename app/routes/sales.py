@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
 from app.models import SaleReport, Product, User
-from app.auth import get_current_user, role_required
+from app.deps import get_current_user, role_required
 
 router = APIRouter(prefix="/api/sales", tags=["Sales"])
 

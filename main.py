@@ -39,7 +39,7 @@ async def root():
 async def dashboard():
     return FileResponse("static/dashboard.html")
 
-# Import and include routes AFTER app is created
+# Import routes
 from app.routes import auth, users, products, stock, sales, transactions, reports
 
 app.include_router(auth.router)

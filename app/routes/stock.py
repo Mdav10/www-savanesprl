@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import StockMovement, Product
-from app.auth import get_current_user, role_required
+from app.deps import get_current_user, role_required
 
 router = APIRouter(prefix="/api/stock", tags=["Stock"])
 
@@ -18,7 +18,6 @@ def create_stock_movement(
     if not product:
         raise HTTPException(status_code=404, detail="Produit non trouvé")
     
-    # Get last available quantity
     last = db.query(StockMovement).filter(
         StockMovement.product_id == product_id
     ).order_by(StockMovement.date.desc()).first()

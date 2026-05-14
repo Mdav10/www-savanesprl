@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
-from app.auth import get_current_user, role_required
+from app.deps import get_current_user, role_required
 from app.utils import get_password_hash
 
 router = APIRouter(prefix="/api/users", tags=["Users"])
@@ -35,25 +35,20 @@ def create_user(
     current_user = Depends(role_required(["DG"])),
     db: Session = Depends(get_db)
 ):
-    # Validate inputs
     if not nom or not email or not username or not mot_de_passe:
         raise HTTPException(status_code=400, detail="Tous les champs sont requis")
     
-    # Check if username already exists
     existing_username = db.query(User).filter(User.username == username).first()
     if existing_username:
         raise HTTPException(status_code=400, detail="Ce nom d'utilisateur est déjà pris")
     
-    # Validate role
     valid_roles = ["DT", "DAF", "DIRECTEUR_COMMERCIAL", "COMPTABLE", "AGENT_STOCK", "AGENT_COMMERCIAL"]
     if role not in valid_roles:
         raise HTTPException(status_code=400, detail="Rôle invalide")
     
-    # Validate password
     if len(mot_de_passe) < 4:
         raise HTTPException(status_code=400, detail="Le mot de passe doit avoir au moins 4 caractères")
     
-    # Create user
     hashed = get_password_hash(mot_de_passe)
     new_user = User(
         nom=nom,
@@ -64,12 +59,8 @@ def create_user(
         is_active=True
     )
     
-    try:
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Erreur base de données: {str(e)}")
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
     
     return {"message": "Utilisateur créé avec succès", "user_id": new_user.id, "username": username}
