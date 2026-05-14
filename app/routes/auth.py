@@ -24,6 +24,7 @@ def create_default_dg(db: Session):
         )
         db.add(dg)
         db.commit()
+        print("✅ DG created")
 
 @router.post("/login", response_model=TokenResponse)
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
@@ -50,8 +51,13 @@ def logout():
     return {"message": "Déconnecté"}
 
 @router.get("/me")
-def get_me(current_user: User = Depends(get_current_user_from_auth)):
-    return {"id": current_user.id, "nom": current_user.nom, "role": current_user.role_id}
+def get_me(current_user: User = Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "nom": current_user.nom,
+        "role": current_user.role_id,
+        "is_active": current_user.is_active
+    }
 
-# Import at end to avoid circular import
-from app.auth import get_current_user as get_current_user_from_auth
+# Import at the end to avoid circular import
+from app.auth import get_current_user
