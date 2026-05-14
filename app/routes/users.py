@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import User, RoleEnum
+from app.models import User
 from app.auth import get_current_user, role_required
 from app.utils import get_password_hash
 
@@ -35,12 +35,10 @@ def create_user(
     current_user = Depends(role_required(["DG"])),
     db: Session = Depends(get_db)
 ):
-    # Check if user exists
     existing = db.query(User).filter((User.email == email) | (User.username == username)).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email ou nom d'utilisateur déjà utilisé")
     
-    # Check if role is valid
     valid_roles = ["DT", "DAF", "DIRECTEUR_COMMERCIAL", "COMPTABLE", "AGENT_STOCK", "AGENT_COMMERCIAL"]
     if role not in valid_roles:
         raise HTTPException(status_code=400, detail="Rôle invalide")

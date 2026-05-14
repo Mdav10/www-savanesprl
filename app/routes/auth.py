@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, RoleEnum
 from app.utils import verify_password, get_password_hash, create_access_token
 from app.schemas import UserLogin, TokenResponse
+from app.auth import get_current_user
 import os
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
@@ -58,6 +59,3 @@ def get_me(current_user: User = Depends(get_current_user)):
         "role": current_user.role_id,
         "is_active": current_user.is_active
     }
-
-# Import at the end to avoid circular import
-from app.auth import get_current_user
